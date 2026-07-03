@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sqlalchemy.orm import Session
 
 from app.models.project import Project
@@ -27,3 +29,18 @@ class ProjectService:
         db.refresh(project)
 
         return project
+
+    @staticmethod
+    def get_project(
+        db: Session,
+        project_id: UUID,
+    ) -> Project | None:
+        """
+        Retrieves a project by its ID.
+        """
+
+        return (
+            db.query(Project)
+            .filter(Project.id == project_id)
+            .first()
+        )
