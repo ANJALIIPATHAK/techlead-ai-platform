@@ -7,6 +7,7 @@ from app.db.base import Base
 from app.models.project import Project
 from app.models.document import Document
 from app.models.message import Message
+from app.models.workflow import Workflow
 
 from alembic import context
 
