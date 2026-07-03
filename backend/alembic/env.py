@@ -8,6 +8,7 @@ from app.models.project import Project
 from app.models.document import Document
 from app.models.message import Message
 from app.models.workflow import Workflow
+from app.models.approval import Approval
 
 from alembic import context
 
