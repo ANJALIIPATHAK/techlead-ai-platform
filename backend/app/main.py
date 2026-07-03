@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 
+from app.core.config import settings
+
 app = FastAPI(
-    title="TechLead AI Platform",
-    description="Enterprise Multi-Agent Platform",
-    version="1.0.0",
+    title=settings.app_name,
+    version=settings.app_version,
 )
 
 
@@ -11,6 +12,7 @@ app = FastAPI(
 async def root():
     return {
         "status": "healthy",
-        "service": "TechLead AI Platform",
-        "version": "1.0.0",
+        "service": settings.app_name,
+        "version": settings.app_version,
+        "environment": settings.environment,
     }
