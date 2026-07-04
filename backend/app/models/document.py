@@ -8,7 +8,6 @@ from uuid import UUID
 from sqlalchemy import ForeignKey
 
 from app.models.base_model import PersistentModel
-from app.models.project import Project
 
 
 class DocumentType(str, Enum):
