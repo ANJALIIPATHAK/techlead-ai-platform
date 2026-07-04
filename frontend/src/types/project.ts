@@ -3,6 +3,8 @@ export interface Document {
   title: string;
   content: string;
   version: number;
+  status: string;
+  review_comment: string | null;
 }
 
 export interface Project {

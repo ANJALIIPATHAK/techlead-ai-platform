@@ -6,6 +6,8 @@ class DocumentResponse(BaseModel):
     title: str
     content: str
     version: int
+    status: str
+    review_comment: str | None
 
 
 class RegenerateDocumentRequest(BaseModel):

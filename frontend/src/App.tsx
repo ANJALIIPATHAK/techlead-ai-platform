@@ -1,22 +1,7 @@
-import { Routes, Route } from "react-router-dom";
-
-import HomePage from "./pages/HomePage";
-import ProjectPage from "./pages/ProjectPage";
+import WorkflowPage from "./pages/WorkflowPage";
 
 function App() {
-  return (
-    <Routes>
-      <Route
-        path="/"
-        element={<HomePage />}
-      />
-
-      <Route
-        path="/projects/:projectId"
-        element={<ProjectPage />}
-      />
-    </Routes>
-  );
+  return <WorkflowPage />;
 }
 
 export default App;

@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.document import Document
 from app.models.project import Project
 from app.schemas.project import ProjectCreate
+from app.services.approval_service import ApprovalService
 from app.services.product_manager_service import ProductManagerService
 from app.services.title_generator import TitleGenerator
 
@@ -62,17 +63,36 @@ class ProjectService:
             .all()
         )
 
-        return {
-            "id": project.id,
-            "title": project.title,
-            "description": project.description,
-            "documents": [
+        documents_response = []
+
+        for document in documents:
+            approval = ApprovalService.get_approval_by_document(
+                db=db,
+                document=document,
+            )
+
+            documents_response.append(
                 {
                     "type": document.type.value,
                     "title": document.title,
                     "content": document.content,
                     "version": document.version,
+                    "status": (
+                        approval.status.value
+                        if approval
+                        else "UNKNOWN"
+                    ),
+                    "review_comment": (
+                        approval.review_comment
+                        if approval
+                        else None
+                    ),
                 }
-                for document in documents
-            ],
+            )
+
+        return {
+            "id": project.id,
+            "title": project.title,
+            "description": project.description,
+            "documents": documents_response,
         }
