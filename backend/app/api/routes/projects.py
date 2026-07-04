@@ -12,6 +12,8 @@ from app.schemas.project import (
     ProjectResponse,
 )
 from app.services.product_manager_service import ProductManagerService
+from app.services.system_architect_service import SystemArchitectService
+from app.services.program_manager_service import ProgramManagerService
 from app.services.project_service import ProjectService
 from app.services.workflow_service import WorkflowService
 
@@ -75,6 +77,66 @@ def regenerate_prd(
 
     return {
         "message": "PRD regenerated successfully.",
+        "document_id": document.id,
+        "version": document.version,
+    }
+    
+@router.post("/projects/{project_id}/regenerate-system-design")
+def regenerate_system_design(
+    project_id: UUID,
+    request: RegenerateDocumentRequest,
+    db: Session = Depends(get_db),
+):
+    project = (
+        db.query(Project)
+        .filter(Project.id == project_id)
+        .first()
+    )
+
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found",
+        )
+
+    document = SystemArchitectService.regenerate_system_design(
+        db=db,
+        project=project,
+        reviewer_feedback=request.review_comment,
+    )
+
+    return {
+        "message": "System Design regenerated successfully.",
+        "document_id": document.id,
+        "version": document.version,
+    }
+    
+@router.post("/projects/{project_id}/regenerate-sprint-plan")
+def regenerate_sprint_plan(
+    project_id: UUID,
+    request: RegenerateDocumentRequest,
+    db: Session = Depends(get_db),
+):
+    project = (
+        db.query(Project)
+        .filter(Project.id == project_id)
+        .first()
+    )
+
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found",
+        )
+
+    document = ProgramManagerService.regenerate_sprint_plan(
+        db=db,
+        project=project,
+        reviewer_feedback=request.review_comment,
+    )
+
+    return {
+        "message": "Sprint Plan regenerated successfully.",
         "document_id": document.id,
         "version": document.version,
     }
