@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class DocumentResponse(BaseModel):
@@ -6,3 +6,11 @@ class DocumentResponse(BaseModel):
     title: str
     content: str
     version: int
+
+
+class RegenerateDocumentRequest(BaseModel):
+    review_comment: str = Field(
+        ...,
+        min_length=5,
+        max_length=5000,
+    )

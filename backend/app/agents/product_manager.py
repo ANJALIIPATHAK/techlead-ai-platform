@@ -42,4 +42,25 @@ Project Description:
         current_document: str,
         conversation_history: str,
     ) -> str:
-        raise NotImplementedError
+        system_prompt = PromptLoader.load(
+            "product_manager.md"
+        )
+
+        user_prompt = f"""
+    Current Product Requirements Document:
+
+    {current_document}
+
+    Reviewer Feedback:
+
+    {conversation_history}
+
+    Generate an improved version of the PRD by addressing all reviewer feedback.
+
+    Return the complete updated PRD in Markdown.
+    """
+
+        return self.llm.generate(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+        )

@@ -6,6 +6,7 @@ from app.agents.product_manager import ProductManagerAgent
 from app.models.document import Document, DocumentType
 from app.models.project import Project
 from app.schemas.project import ProjectCreate
+from app.services.approval_service import ApprovalService
 from app.services.document_service import DocumentService
 from app.services.gemini_llm_service import GeminiLLMService
 from app.services.title_generator import TitleGenerator
@@ -43,12 +44,18 @@ class ProjectService:
         )
 
         # Save PRD
-        DocumentService.create_document(
+        document = DocumentService.create_document(
             db=db,
             project=project,
             document_type=DocumentType.PRD,
             title="Product Requirements Document",
             content=prd,
+        )
+
+        # Create initial approval
+        ApprovalService.create_initial_approval(
+            db=db,
+            document=document,
         )
 
         return project

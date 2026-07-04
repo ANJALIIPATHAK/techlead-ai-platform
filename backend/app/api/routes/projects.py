@@ -4,11 +4,14 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
+from app.models.project import Project
+from app.schemas.document import RegenerateDocumentRequest
 from app.schemas.project import (
     ProjectCreate,
-    ProjectResponse,
     ProjectDetailResponse,
+    ProjectResponse,
 )
+from app.services.product_manager_service import ProductManagerService
 from app.services.project_service import ProjectService
 
 router = APIRouter()
@@ -30,7 +33,6 @@ def create_project(
     "/projects/{project_id}",
     response_model=ProjectDetailResponse,
 )
-
 def get_project(
     project_id: UUID,
     db: Session = Depends(get_db),
@@ -44,3 +46,34 @@ def get_project(
         )
 
     return project
+
+
+@router.post("/projects/{project_id}/regenerate-prd")
+def regenerate_prd(
+    project_id: UUID,
+    request: RegenerateDocumentRequest,
+    db: Session = Depends(get_db),
+):
+    project = (
+        db.query(Project)
+        .filter(Project.id == project_id)
+        .first()
+    )
+
+    if project is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Project not found",
+        )
+
+    document = ProductManagerService.regenerate_prd(
+        db=db,
+        project=project,
+        reviewer_feedback=request.review_comment,
+    )
+
+    return {
+        "message": "PRD regenerated successfully.",
+        "document_id": document.id,
+        "version": document.version,
+    }
