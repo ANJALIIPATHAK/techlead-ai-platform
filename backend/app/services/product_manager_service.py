@@ -11,11 +11,47 @@ from app.services.gemini_llm_service import GeminiLLMService
 
 class ProductManagerService:
     @staticmethod
+    def generate_prd(
+        db: Session,
+        project: Project,
+    ) -> Document:
+        """
+        Generates the initial PRD for a project.
+        """
+
+        llm = GeminiLLMService()
+        agent = ProductManagerAgent(llm)
+
+        prd = agent.generate(
+            project_title=project.title,
+            project_description=project.description,
+        )
+
+        document = DocumentService.create_document(
+            db=db,
+            project=project,
+            document_type=DocumentType.PRD,
+            title="Product Requirements Document",
+            content=prd,
+        )
+
+        ApprovalService.create_initial_approval(
+            db=db,
+            document=document,
+        )
+
+        return document
+
+    @staticmethod
     def regenerate_prd(
         db: Session,
         project: Project,
         reviewer_feedback: str,
     ) -> Document:
+        """
+        Regenerates the latest PRD based on reviewer feedback.
+        """
+
         llm = GeminiLLMService()
         agent = ProductManagerAgent(llm)
 
@@ -28,7 +64,6 @@ class ProductManagerService:
         if latest_prd is None:
             raise ValueError("No PRD found for this project.")
 
-        # Reject the current PRD approval
         approval = ApprovalService.get_approval_by_document(
             db=db,
             document=latest_prd,
@@ -42,13 +77,11 @@ class ProductManagerService:
                 review_comment=reviewer_feedback,
             )
 
-        # Generate improved PRD
         updated_prd = agent.regenerate(
             current_document=latest_prd.content,
             conversation_history=reviewer_feedback,
         )
 
-        # Save new version
         new_document = DocumentService.create_document(
             db=db,
             project=project,
@@ -57,7 +90,6 @@ class ProductManagerService:
             content=updated_prd,
         )
 
-        # Create approval for new version
         ApprovalService.create_initial_approval(
             db=db,
             document=new_document,

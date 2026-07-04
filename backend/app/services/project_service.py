@@ -2,13 +2,10 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
-from app.agents.product_manager import ProductManagerAgent
-from app.models.document import Document, DocumentType
+from app.models.document import Document
 from app.models.project import Project
 from app.schemas.project import ProjectCreate
-from app.services.approval_service import ApprovalService
-from app.services.document_service import DocumentService
-from app.services.gemini_llm_service import GeminiLLMService
+from app.services.product_manager_service import ProductManagerService
 from app.services.title_generator import TitleGenerator
 
 
@@ -19,8 +16,7 @@ class ProjectService:
         project_data: ProjectCreate,
     ) -> Project:
         """
-        Creates a new project and automatically generates
-        its initial Product Requirements Document (PRD).
+        Creates a new project and generates its initial PRD.
         """
 
         title = TitleGenerator.generate(project_data.description)
@@ -34,28 +30,9 @@ class ProjectService:
         db.commit()
         db.refresh(project)
 
-        # Generate PRD using AI
-        llm = GeminiLLMService()
-        product_manager = ProductManagerAgent(llm)
-
-        prd = product_manager.generate(
-            project_title=project.title,
-            project_description=project.description,
-        )
-
-        # Save PRD
-        document = DocumentService.create_document(
+        ProductManagerService.generate_prd(
             db=db,
             project=project,
-            document_type=DocumentType.PRD,
-            title="Product Requirements Document",
-            content=prd,
-        )
-
-        # Create initial approval
-        ApprovalService.create_initial_approval(
-            db=db,
-            document=document,
         )
 
         return project
@@ -81,6 +58,7 @@ class ProjectService:
         documents = (
             db.query(Document)
             .filter(Document.project_id == project.id)
+            .order_by(Document.type, Document.version)
             .all()
         )
 
