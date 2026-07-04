@@ -53,48 +53,55 @@ function WorkflowPage() {
     <>
       <Navbar />
 
-      <main className="mx-auto max-w-6xl px-8 py-10">
+      <main className="relative overflow-hidden">
 
-        <HeroSection />
+        {/* Background Glow */}
+        <div className="absolute left-1/2 top-24 h-[450px] w-[450px] -translate-x-1/2 rounded-full bg-blue-600/10 blur-[160px]" />
 
-        <ProjectInput
-          description={description}
-          loading={loading}
-          onChange={setDescription}
-          onGenerate={handleGenerate}
-        />
+        <div className="relative mx-auto w-full max-w-6xl px-8 pb-20 pt-10">
 
-        {(loading || project) && (
-          <>
-            <WorkflowTimeline
-              stage="PRD"
-            />
+          <HeroSection />
 
-            <AgentPanel
-              agent="Product Manager"
-              loading={loading}
-              message={
-                loading
-                  ? "I'm analyzing your project requirements and preparing a comprehensive Product Requirements Document."
-                  : "I've completed the Product Requirements Document. Please review it carefully. If you'd like any changes, provide your feedback and regenerate it. Otherwise, approve it so I can hand it over to the System Architect."
-              }
-            />
-          </>
-        )}
-
-        {project && (
-          <DocumentViewer
-            title={
-              project.documents[0].title
-            }
-            version={
-              project.documents[0].version
-            }
-            content={
-              project.documents[0].content
-            }
+          <ProjectInput
+            description={description}
+            loading={loading}
+            onChange={setDescription}
+            onGenerate={handleGenerate}
           />
-        )}
+
+          {(loading || project) && (
+            <div className="mt-12 space-y-8">
+
+              <WorkflowTimeline
+                stage="PRD"
+              />
+
+              <AgentPanel
+                agent="Product Manager"
+                loading={loading}
+                message={
+                  loading
+                    ? "I'm analyzing your project requirements and preparing a comprehensive Product Requirements Document."
+                    : "I've completed the Product Requirements Document. Please review it carefully. If you'd like any changes, provide your feedback and regenerate it. Otherwise, approve it so I can hand it over to the System Architect."
+                }
+              />
+
+              {project && (
+                <DocumentViewer
+                  title={
+                    project.documents[0].title
+                  }
+                  version={
+                    project.documents[0].version
+                  }
+                  content={
+                    project.documents[0].content
+                  }
+                />
+              )}
+            </div>
+          )}
+        </div>
       </main>
     </>
   );

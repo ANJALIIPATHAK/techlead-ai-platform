@@ -1,56 +1,79 @@
-import { CheckCircle, Circle } from "lucide-react";
+import { motion } from "framer-motion";
+import {
+  CheckCircle2,
+  Circle,
+} from "lucide-react";
 
 interface WorkflowTimelineProps {
   stage: "PRD" | "SYSTEM_DESIGN" | "SPRINT_PLAN";
 }
 
+const stages = [
+  {
+    key: "PRD",
+    label: "Product Requirements",
+  },
+  {
+    key: "SYSTEM_DESIGN",
+    label: "System Design",
+  },
+  {
+    key: "SPRINT_PLAN",
+    label: "Sprint Plan",
+  },
+];
+
 function WorkflowTimeline({
   stage,
 }: WorkflowTimelineProps) {
-  const stages = [
-    "PRD",
-    "SYSTEM_DESIGN",
-    "SPRINT_PLAN",
-  ];
+  const activeIndex = stages.findIndex(
+    (s) => s.key === stage,
+  );
 
   return (
-    <section className="mx-auto mt-10 max-w-4xl rounded-3xl border border-gray-200 bg-white p-8 shadow-lg">
+    <motion.section
+      initial={{ opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="mx-auto max-w-5xl rounded-3xl border border-zinc-800 bg-zinc-900/70 p-8 shadow-xl backdrop-blur-xl"
+    >
       <div className="flex items-center justify-between">
-        {stages.map((item, index) => {
-          const active =
-            stages.indexOf(stage) >= index;
 
-          return (
-            <div
-              key={item}
-              className="flex flex-1 items-center"
-            >
-              <div className="flex flex-col items-center">
-                {active ? (
-                  <CheckCircle
-                    className="text-green-500"
+        {stages.map((item, index) => (
+          <div
+            key={item.key}
+            className="flex flex-1 items-center"
+          >
+            <div className="flex flex-col items-center">
+
+              {index <= activeIndex ? (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/20">
+                  <CheckCircle2
                     size={28}
+                    className="text-emerald-400"
                   />
-                ) : (
+                </div>
+              ) : (
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-800">
                   <Circle
-                    className="text-gray-400"
-                    size={28}
+                    size={26}
+                    className="text-zinc-500"
                   />
-                )}
-
-                <span className="mt-2 text-sm font-medium">
-                  {item.replace("_", " ")}
-                </span>
-              </div>
-
-              {index !== stages.length - 1 && (
-                <div className="mx-4 h-1 flex-1 rounded-full bg-gray-200" />
+                </div>
               )}
+
+              <span className="mt-4 text-center text-sm font-medium text-zinc-300">
+                {item.label}
+              </span>
             </div>
-          );
-        })}
+
+            {index !== stages.length - 1 && (
+              <div className="mx-5 h-[2px] flex-1 bg-zinc-700" />
+            )}
+          </div>
+        ))}
+
       </div>
-    </section>
+    </motion.section>
   );
 }
 

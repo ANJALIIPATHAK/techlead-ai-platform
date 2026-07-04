@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Bot } from "lucide-react";
+import { Bot, Sparkles } from "lucide-react";
 
 interface AgentPanelProps {
   agent: string;
@@ -14,33 +14,52 @@ function AgentPanel({
 }: AgentPanelProps) {
   return (
     <motion.section
-      initial={{ opacity: 0, y: 25 }}
+      initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
-      className="mx-auto mt-10 max-w-4xl rounded-3xl border border-gray-200 bg-white p-8 shadow-lg"
+      transition={{ duration: 0.35 }}
+      className="mx-auto max-w-5xl rounded-3xl border border-zinc-800 bg-zinc-900/70 p-8 shadow-2xl backdrop-blur-xl"
     >
       <div className="flex items-start gap-6">
-        <div className="rounded-full bg-blue-100 p-4">
+        <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg shadow-blue-500/20">
           <Bot
-            size={36}
-            className="text-blue-600"
+            size={42}
+            className="text-white"
           />
         </div>
 
         <div className="flex-1">
-          <h2 className="text-xl font-semibold">
-            {agent}
-          </h2>
+          <div className="mb-4 flex items-center gap-3">
+            <h2 className="text-2xl font-bold text-white">
+              {agent}
+            </h2>
 
-          <div className="mt-3 rounded-2xl bg-gray-100 p-5">
-            <p className="text-gray-700">
+            <div className="rounded-full border border-blue-500/30 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-300">
+              Active Agent
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-6">
+            <div className="mb-3 flex items-center gap-2 text-blue-400">
+              <Sparkles size={16} />
+
+              <span className="text-sm font-medium">
+                AI Response
+              </span>
+            </div>
+
+            <p className="text-base leading-8 text-zinc-300">
               {message}
             </p>
 
             {loading && (
-              <div className="mt-5 flex gap-2">
-                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 delay-100" />
-                <span className="h-2 w-2 animate-bounce rounded-full bg-blue-500 delay-200" />
+              <div className="mt-8 flex items-center gap-3">
+                <span className="h-3 w-3 animate-bounce rounded-full bg-blue-400" />
+                <span className="h-3 w-3 animate-bounce rounded-full bg-blue-400 [animation-delay:150ms]" />
+                <span className="h-3 w-3 animate-bounce rounded-full bg-blue-400 [animation-delay:300ms]" />
+
+                <span className="ml-2 text-sm text-zinc-500">
+                  Thinking...
+                </span>
               </div>
             )}
           </div>
