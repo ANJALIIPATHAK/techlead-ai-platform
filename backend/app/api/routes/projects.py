@@ -4,7 +4,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
-from app.schemas.project import ProjectCreate, ProjectResponse
+from app.schemas.project import (
+    ProjectCreate,
+    ProjectResponse,
+    ProjectDetailResponse,
+)
 from app.services.project_service import ProjectService
 
 router = APIRouter()
@@ -24,8 +28,9 @@ def create_project(
 
 @router.get(
     "/projects/{project_id}",
-    response_model=ProjectResponse,
+    response_model=ProjectDetailResponse,
 )
+
 def get_project(
     project_id: UUID,
     db: Session = Depends(get_db),

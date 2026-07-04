@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from app.agents.product_manager import ProductManagerAgent
-from app.models.document import DocumentType
+from app.models.document import Document, DocumentType
 from app.models.project import Project
 from app.schemas.project import ProjectCreate
 from app.services.document_service import DocumentService
@@ -18,7 +18,8 @@ class ProjectService:
         project_data: ProjectCreate,
     ) -> Project:
         """
-        Creates a new project and generates its initial PRD.
+        Creates a new project and automatically generates
+        its initial Product Requirements Document (PRD).
         """
 
         title = TitleGenerator.generate(project_data.description)
@@ -32,7 +33,7 @@ class ProjectService:
         db.commit()
         db.refresh(project)
 
-        # Generate PRD
+        # Generate PRD using AI
         llm = GeminiLLMService()
         product_manager = ProductManagerAgent(llm)
 
@@ -56,13 +57,37 @@ class ProjectService:
     def get_project(
         db: Session,
         project_id: UUID,
-    ) -> Project | None:
+    ):
         """
-        Retrieves a project by its ID.
+        Retrieves a project along with all its generated documents.
         """
 
-        return (
+        project = (
             db.query(Project)
             .filter(Project.id == project_id)
             .first()
         )
+
+        if project is None:
+            return None
+
+        documents = (
+            db.query(Document)
+            .filter(Document.project_id == project.id)
+            .all()
+        )
+
+        return {
+            "id": project.id,
+            "title": project.title,
+            "description": project.description,
+            "documents": [
+                {
+                    "type": document.type.value,
+                    "title": document.title,
+                    "content": document.content,
+                    "version": document.version,
+                }
+                for document in documents
+            ],
+        }
