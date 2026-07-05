@@ -1,5 +1,6 @@
-from pydantic import BaseModel, Field
 from uuid import UUID
+
+from pydantic import BaseModel, Field
 
 from app.schemas.document import DocumentResponse
 
@@ -12,6 +13,11 @@ class ProjectCreate(BaseModel):
     )
 
 
+class WorkflowResponse(BaseModel):
+    stage: str
+    status: str
+
+
 class ProjectResponse(BaseModel):
     id: UUID
     title: str
@@ -22,4 +28,5 @@ class ProjectDetailResponse(BaseModel):
     id: UUID
     title: str
     description: str
+    workflow: WorkflowResponse | None = None
     documents: list[DocumentResponse]

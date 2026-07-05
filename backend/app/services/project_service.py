@@ -6,8 +6,10 @@ from app.models.document import Document
 from app.models.project import Project
 from app.schemas.project import ProjectCreate
 from app.services.approval_service import ApprovalService
-from app.services.product_manager_service import ProductManagerService
 from app.services.title_generator import TitleGenerator
+
+from app.models.workflow import WorkflowStage
+from app.services.workflow_job_service import WorkflowJobService
 
 
 class ProjectService:
@@ -17,10 +19,12 @@ class ProjectService:
         project_data: ProjectCreate,
     ) -> Project:
         """
-        Creates a new project and generates its initial PRD.
+        Creates a project and queues the first workflow job.
         """
 
-        title = TitleGenerator.generate(project_data.description)
+        title = TitleGenerator.generate(
+            project_data.description,
+        )
 
         project = Project(
             title=title,
@@ -31,9 +35,10 @@ class ProjectService:
         db.commit()
         db.refresh(project)
 
-        ProductManagerService.generate_prd(
+        WorkflowJobService.create_job(
             db=db,
             project=project,
+            stage=WorkflowStage.PRD,
         )
 
         return project
@@ -44,7 +49,8 @@ class ProjectService:
         project_id: UUID,
     ):
         """
-        Retrieves a project along with all its generated documents.
+        Returns the project, workflow state,
+        and generated documents.
         """
 
         project = (
@@ -56,19 +62,32 @@ class ProjectService:
         if project is None:
             return None
 
+        workflow = WorkflowJobService.get_job(
+            db=db,
+            project=project,
+        )
+
         documents = (
             db.query(Document)
-            .filter(Document.project_id == project.id)
-            .order_by(Document.type, Document.version)
+            .filter(
+                Document.project_id == project.id,
+            )
+            .order_by(
+                Document.type,
+                Document.version,
+            )
             .all()
         )
 
         documents_response = []
 
         for document in documents:
-            approval = ApprovalService.get_approval_by_document(
-                db=db,
-                document=document,
+
+            approval = (
+                ApprovalService.get_approval_by_document(
+                    db=db,
+                    document=document,
+                )
             )
 
             documents_response.append(
@@ -90,9 +109,18 @@ class ProjectService:
                 }
             )
 
+        workflow_response = None
+
+        if workflow is not None:
+            workflow_response = {
+                "stage": workflow.stage.value,
+                "status": workflow.status.value,
+            }
+
         return {
             "id": project.id,
             "title": project.title,
             "description": project.description,
+            "workflow": workflow_response,
             "documents": documents_response,
         }
