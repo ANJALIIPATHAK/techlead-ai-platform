@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { ChevronDown, ChevronRight } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronRight,
+  Files,
+} from "lucide-react";
 
 import type { Document } from "../types/project";
 import type { DocumentType } from "../utils/workflowDocuments";
@@ -32,6 +36,7 @@ function DocumentHistory({
         SYSTEM_DESIGN: false,
         SPRINT_PLAN: false,
       });
+
       return;
     }
 
@@ -89,91 +94,150 @@ function DocumentHistory({
   ];
 
   return (
-    <section className="space-y-4">
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
-          Version History
-        </p>
+    <section className="space-y-8">
 
-        <h2 className="mt-1 text-2xl font-semibold text-white">
-          Generated Documents
-        </h2>
+      <div className="flex items-center gap-5">
+
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-500/10 text-cyan-300">
+          <Files size={24} />
+        </div>
+
+        <div>
+
+          <p className="text-xs font-semibold uppercase tracking-[0.26em] text-cyan-300">
+            Documents
+          </p>
+
+          <h2 className="mt-2 text-3xl font-bold tracking-tight text-white">
+            Version History
+          </h2>
+
+        </div>
+
       </div>
 
-      {sections.map((section) => {
-        if (
-          section.documents.length === 0
-        ) {
-          return null;
-        }
+      <div className="space-y-6">
 
-        const isExpanded =
-          expandedSections[section.key];
+        {sections.map((section) => {
 
-        return (
-          <section
-            key={section.key}
-            className="overflow-hidden rounded-2xl border border-[#2a2f38] bg-[#111317]/90 shadow-xl shadow-black/20"
-          >
-            <button
-              onClick={() =>
-                setExpandedSections(
-                  (prev) => ({
-                    ...prev,
-                    [section.key]:
-                      !prev[section.key],
-                  }),
-                )
-              }
-              className="flex w-full items-center justify-between gap-4 px-6 py-5 text-left"
+          if (
+            section.documents.length === 0
+          ) {
+            return null;
+          }
+
+          const isExpanded =
+            expandedSections[section.key];
+
+          return (
+            <section
+              key={section.key}
+              className="overflow-hidden rounded-3xl border border-white/8 bg-[#0f1319] shadow-2xl shadow-black/40 transition-all duration-300"
             >
-              <div>
-                <h3 className="text-lg font-semibold text-white">
-                  {section.title}
-                </h3>
 
-                <p className="mt-1 text-sm text-slate-400">
-                  {
-                    section.documents
-                      .length
-                  }{" "}
-                  version(s)
-                </p>
-              </div>
+              <button
+                onClick={() =>
+                  setExpandedSections(
+                    (prev) => ({
+                      ...prev,
+                      [section.key]:
+                        !prev[
+                          section.key
+                        ],
+                    }),
+                  )
+                }
+                className="flex w-full items-center justify-between px-8 py-7 text-left transition-colors duration-300 hover:bg-white/[0.03]"
+              >
 
-              {isExpanded ? (
-                <ChevronDown className="shrink-0 text-slate-400" />
-              ) : (
-                <ChevronRight className="shrink-0 text-slate-400" />
-              )}
-            </button>
+                <div>
 
-            {isExpanded && (
-              <div className="space-y-5 border-t border-[#2a2f38] p-5">
-                {section.documents.map(
-                  (document) => (
-                    <DocumentViewer
-                      key={`${document.type}-${document.version}`}
-                      title={
-                        document.title
-                      }
-                      version={
-                        document.version
-                      }
-                      content={
-                        document.content
-                      }
-                      status={
-                        document.status
-                      }
+                  <div className="flex items-center gap-4">
+
+                    <h3 className="text-xl font-semibold text-white">
+                      {section.title}
+                    </h3>
+
+                    <span className="rounded-full border border-cyan-400/15 bg-cyan-400/10 px-3 py-1 text-xs font-semibold text-cyan-200">
+                      {
+                        section.documents
+                          .length
+                      }{" "}
+                      Version
+                      {section.documents
+                        .length > 1
+                        ? "s"
+                        : ""}
+                    </span>
+
+                  </div>
+
+                  <p className="mt-3 text-sm leading-7 text-slate-400">
+                    Expand to review every
+                    generated version for
+                    this document.
+                  </p>
+
+                </div>
+
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-white/10 bg-white/5">
+
+                  {isExpanded ? (
+                    <ChevronDown
+                      className="text-slate-300"
+                      size={22}
                     />
-                  ),
-                )}
-              </div>
-            )}
-          </section>
-        );
-      })}
+                  ) : (
+                    <ChevronRight
+                      className="text-slate-300"
+                      size={22}
+                    />
+                  )}
+
+                </div>
+
+              </button>
+
+              {isExpanded && (
+
+                <div className="border-t border-white/8 bg-[#121821] p-8">
+
+                  <div className="space-y-8">
+
+                    {section.documents.map(
+                      (document) => (
+
+                        <DocumentViewer
+                          key={`${document.type}-${document.version}`}
+                          title={
+                            document.title
+                          }
+                          version={
+                            document.version
+                          }
+                          content={
+                            document.content
+                          }
+                          status={
+                            document.status
+                          }
+                        />
+
+                      ),
+                    )}
+
+                  </div>
+
+                </div>
+
+              )}
+
+            </section>
+          );
+        })}
+
+      </div>
+
     </section>
   );
 }

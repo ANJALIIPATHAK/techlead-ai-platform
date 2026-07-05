@@ -67,47 +67,64 @@ function ProjectOverview({
     stage === "REVIEW_SYSTEM_DESIGN" ||
     stage === "REVIEW_SPRINT_PLAN";
 
-  const isComplete = stage === "COMPLETED";
+  const isComplete =
+    stage === "COMPLETED";
+
   const activeDocumentType =
     getActiveDocumentType(stage);
 
   return (
-    <div className="mt-10 space-y-8">
-      <section className="rounded-2xl border border-[#2a2f38] bg-[#111317]/92 p-6 shadow-xl shadow-black/20">
-        <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/80">
-          Project
-        </p>
+    <div className="space-y-14">
 
-        <div className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <h1 className="max-w-5xl text-3xl font-semibold leading-tight text-white md:text-4xl">
+      {/* Project Header */}
+
+      <section className="rounded-3xl border border-white/8 bg-[#0f1319] p-10 shadow-2xl shadow-black/40">
+
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-start lg:justify-between">
+
+          <div className="max-w-4xl">
+
+            <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
+              Project
+            </p>
+
+            <h1 className="mt-4 text-5xl font-bold leading-tight tracking-tight text-white">
               {project.title}
             </h1>
 
-            <p className="mt-4 max-w-4xl text-base leading-7 text-slate-300">
+            <p className="mt-6 text-lg leading-9 text-slate-400">
               {project.description}
             </p>
+
           </div>
 
-          <div className="shrink-0 rounded-xl border border-[#343a44] bg-[#171a20] px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">
+          <div className="min-w-[240px] rounded-2xl border border-white/8 bg-[#171c24] p-6">
+
+            <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">
               Current Stage
             </p>
 
-            <p className="mt-1 text-sm font-semibold text-amber-100">
+            <p className="mt-3 text-lg font-semibold text-cyan-200">
               {isComplete
                 ? "Completed"
                 : getStageName(stage)}
             </p>
+
           </div>
+
         </div>
+
       </section>
+
+      {/* Completion */}
 
       {isComplete && (
         <CompletionSummary
           documents={project.documents}
         />
       )}
+
+      {/* Agent */}
 
       <div ref={agentPanelRef}>
         <AgentPanel
@@ -117,6 +134,8 @@ function ProjectOverview({
           stage={stage}
         />
       </div>
+
+      {/* Feedback */}
 
       {showFeedback && (
         <FeedbackPanel
@@ -129,11 +148,14 @@ function ProjectOverview({
         />
       )}
 
+      {/* Document History */}
+
       <DocumentHistory
         documents={project.documents}
         activeType={activeDocumentType}
         collapseWhenComplete={isComplete}
       />
+
     </div>
   );
 }

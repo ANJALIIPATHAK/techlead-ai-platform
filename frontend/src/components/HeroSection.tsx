@@ -3,19 +3,20 @@ import {
   Building2,
   GitBranch,
   ShieldCheck,
+  Sparkles,
 } from "lucide-react";
 
 const highlights = [
   {
-    label: "Approval gated",
+    label: "Approval Gated",
     Icon: ShieldCheck,
   },
   {
-    label: "Multi-agent workflow",
+    label: "Multi-Agent Workflow",
     Icon: GitBranch,
   },
   {
-    label: "Enterprise planning",
+    label: "Enterprise Ready",
     Icon: Building2,
   },
 ];
@@ -26,41 +27,61 @@ function HeroSection() {
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
-      className="py-8"
+      className="relative py-6"
     >
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-amber-200/80">
-            Hazel AI
-          </p>
+      <div className="absolute left-0 top-0 h-40 w-40 rounded-full bg-cyan-500/10 blur-3xl" />
 
-          <h1 className="mt-4 max-w-4xl text-4xl font-semibold leading-tight text-white md:text-6xl">
-            Multi-agent software planning for enterprise teams
-          </h1>
+      <div className="relative">
 
-          <p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 md:text-lg">
-            Turn a project description into approved requirements, system
-            design, and sprint planning documents through a guided review
-            workflow.
-          </p>
+        <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.22em] text-cyan-300">
+          <Sparkles size={14} />
+          Hazel AI
         </div>
 
-        <div className="grid gap-3 sm:grid-cols-3 lg:w-[430px] lg:grid-cols-1">
+        <h1 className="mt-5 max-w-5xl text-5xl font-bold leading-tight text-white">
+
+          Enterprise{" "}
+
+          <span className="bg-gradient-to-r from-cyan-300 via-sky-300 to-violet-300 bg-clip-text text-transparent">
+            Multi-Agent
+          </span>
+
+          <br />
+
+          Software Planning
+
+        </h1>
+
+        <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-400">
+          Transform a software idea into approved product requirements,
+          system architecture, and sprint planning documents through an
+          AI-powered collaborative workflow.
+        </p>
+
+        <div className="mt-8 flex flex-wrap gap-4">
+
           {highlights.map(({ label, Icon }) => (
+
             <div
               key={label}
-              className="flex items-center gap-3 rounded-xl border border-[#2a2f38] bg-[#111317]/80 px-4 py-3"
+              className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 backdrop-blur-xl transition-all duration-300 hover:border-cyan-400/30 hover:bg-cyan-400/5"
             >
+
               <Icon
                 size={18}
-                className="text-amber-200"
+                className="text-cyan-300"
               />
+
               <span className="text-sm font-medium text-slate-200">
                 {label}
               </span>
+
             </div>
+
           ))}
+
         </div>
+
       </div>
     </motion.section>
   );

@@ -22,33 +22,61 @@ interface Props {
 
 const statusStyles = {
   WAITING: {
-    card: "border-[#30343c] bg-[#15171b]",
-    icon: "bg-[#242832] text-slate-400",
-    pill: "border-slate-700 bg-slate-900/70 text-slate-300",
+    card:
+      "border-white/8 bg-[#12161d]",
+    icon:
+      "bg-slate-700/20 text-slate-400",
+    pill:
+      "border-slate-700 bg-slate-800/70 text-slate-300",
+    glow: "",
     Icon: Clock3,
   },
+
   GENERATING: {
-    card: "border-amber-400/40 bg-amber-400/[0.07]",
-    icon: "bg-amber-400/15 text-amber-300",
-    pill: "border-amber-400/40 bg-amber-400/10 text-amber-200",
+    card:
+      "border-cyan-400/20 bg-gradient-to-br from-cyan-500/[0.07] to-[#12161d]",
+    icon:
+      "bg-cyan-400/15 text-cyan-300",
+    pill:
+      "border-cyan-400/30 bg-cyan-400/10 text-cyan-200",
+    glow:
+      "shadow-xl shadow-cyan-950/20",
     Icon: Loader2,
   },
+
   PENDING_APPROVAL: {
-    card: "border-violet-400/40 bg-violet-400/[0.07]",
-    icon: "bg-violet-400/15 text-violet-300",
-    pill: "border-violet-400/40 bg-violet-400/10 text-violet-200",
+    card:
+      "border-violet-400/20 bg-gradient-to-br from-violet-500/[0.07] to-[#12161d]",
+    icon:
+      "bg-violet-400/15 text-violet-300",
+    pill:
+      "border-violet-400/30 bg-violet-400/10 text-violet-200",
+    glow:
+      "shadow-xl shadow-violet-950/20",
     Icon: FileText,
   },
+
   APPROVED: {
-    card: "border-teal-400/40 bg-teal-400/[0.07]",
-    icon: "bg-teal-400/15 text-teal-300",
-    pill: "border-teal-400/40 bg-teal-400/10 text-teal-200",
+    card:
+      "border-emerald-400/20 bg-gradient-to-br from-emerald-500/[0.07] to-[#12161d]",
+    icon:
+      "bg-emerald-400/15 text-emerald-300",
+    pill:
+      "border-emerald-400/30 bg-emerald-400/10 text-emerald-200",
+    glow:
+      "shadow-xl shadow-emerald-950/20",
     Icon: CheckCircle2,
   },
+
   REJECTED: {
-    card: "border-rose-400/40 bg-rose-400/[0.07]",
-    icon: "bg-rose-400/15 text-rose-300",
-    pill: "border-rose-400/40 bg-rose-400/10 text-rose-200",
+    card:
+      "border-rose-400/20 bg-gradient-to-br from-rose-500/[0.07] to-[#12161d]",
+    icon:
+      "bg-rose-400/15 text-rose-300",
+    pill:
+      "border-rose-400/30 bg-rose-400/10 text-rose-200",
+    glow:
+      "shadow-xl shadow-rose-950/20",
     Icon: AlertCircle,
   },
 };
@@ -58,24 +86,29 @@ function DocumentStatusBoard({
   stage,
 }: Props) {
   return (
-    <section className="rounded-2xl border border-[#2a2f38] bg-[#111317]/90 p-5 shadow-xl shadow-black/20">
-      <div className="mb-5 flex items-center justify-between gap-4">
+    <section className="rounded-3xl border border-white/8 bg-[#0f1319] p-10 shadow-2xl shadow-black/40">
+      <div className="mb-10 flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-amber-200/80">
-            Document Control
+          <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
+            Workflow Overview
           </p>
 
-          <h2 className="mt-1 text-xl font-semibold text-white">
-            Live Document Status
+          <h2 className="mt-3 text-4xl font-bold tracking-tight text-white">
+            Planning Deliverables
           </h2>
+
+          <p className="mt-4 max-w-3xl text-base leading-8 text-slate-400">
+            Monitor every planning artifact as it progresses through the
+            approval workflow.
+          </p>
         </div>
 
-        <div className="hidden rounded-full border border-teal-400/30 bg-teal-400/10 px-3 py-1 text-xs font-medium text-teal-200 sm:block">
-          Approval gated
+        <div className="self-start rounded-full border border-cyan-400/20 bg-cyan-400/10 px-5 py-2 text-sm font-medium text-cyan-200">
+          Enterprise Workflow
         </div>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-8 lg:grid-cols-3">
         {documentSteps.map((step) => {
           const status =
             getDocumentProgressStatus(
@@ -83,25 +116,30 @@ function DocumentStatusBoard({
               step.type,
               stage,
             );
+
           const latestDocument =
             getLatestDocument(
               documents,
               step.type,
             );
-          const style = statusStyles[status];
-          const Icon = style.Icon;
+
+          const style =
+            statusStyles[status];
+
+          const Icon =
+            style.Icon;
 
           return (
             <article
               key={step.type}
-              className={`rounded-xl border p-4 ${style.card}`}
+              className={`group rounded-3xl border ${style.card} ${style.glow} p-7 transition-all duration-300 hover:-translate-y-2 hover:border-white/15 hover:shadow-2xl`}
             >
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between">
                 <div
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${style.icon}`}
+                  className={`flex h-16 w-16 items-center justify-center rounded-2xl ${style.icon}`}
                 >
                   <Icon
-                    size={21}
+                    size={28}
                     className={
                       status === "GENERATING"
                         ? "animate-spin"
@@ -117,15 +155,41 @@ function DocumentStatusBoard({
                 </span>
               </div>
 
-              <h3 className="mt-5 text-lg font-semibold text-white">
-                {step.label}
-              </h3>
+              <div className="mt-9">
+                <h3 className="text-2xl font-semibold text-white">
+                  {step.label}
+                </h3>
 
-              <p className="mt-1 text-sm text-slate-400">
-                {latestDocument
-                  ? `Version ${latestDocument.version}`
-                  : "No document yet"}
-              </p>
+                <p className="mt-4 text-xs uppercase tracking-[0.22em] text-slate-500">
+                  Latest Version
+                </p>
+
+                <p className="mt-2 text-xl font-medium text-slate-200">
+                  {latestDocument
+                    ? `Version ${latestDocument.version}`
+                    : "Not Generated"}
+                </p>
+              </div>
+
+              <div className="my-7 h-px bg-gradient-to-r from-white/10 via-white/5 to-transparent" />
+
+              <div className="flex items-end justify-between">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.22em] text-slate-500">
+                    Status
+                  </p>
+
+                  <p className="mt-2 text-sm font-medium text-slate-300">
+                    {getStatusLabel(status)}
+                  </p>
+                </div>
+
+                {status === "APPROVED" && (
+                  <div className="rounded-xl bg-emerald-400/10 px-4 py-2 text-xs font-semibold text-emerald-300">
+                    Ready →
+                  </div>
+                )}
+              </div>
             </article>
           );
         })}
