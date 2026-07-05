@@ -1,105 +1,113 @@
-import { useState } from "react";
+import { useEffect, useRef } from "react";
 
-import Navbar from "../components/Navbar";
+import AgentTimeline from "../components/AgentTimeline";
+import DocumentStatusBoard from "../components/DocumentStatusBoard";
 import HeroSection from "../components/HeroSection";
+import Navbar from "../components/Navbar";
 import ProjectInput from "../components/ProjectInput";
+import ProjectOverview from "../components/ProjectOverview";
 import WorkflowTimeline from "../components/WorkflowTimeline";
-import AgentPanel from "../components/AgentPanel";
-import DocumentViewer from "../components/DocumentViewer";
 
-import {
-  createProject,
-  getProject,
-} from "../api/projects";
-
-import type { ProjectDetail } from "../types/project";
+import { useWorkflow } from "../hooks/useWorkflow";
 
 function WorkflowPage() {
-  const [description, setDescription] =
-    useState("");
+  const agentPanelRef =
+    useRef<HTMLDivElement>(null);
 
-  const [loading, setLoading] =
-    useState(false);
+  const {
+    description,
+    setDescription,
 
-  const [project, setProject] =
-    useState<ProjectDetail | null>(null);
+    feedback,
+    setFeedback,
 
-  const handleGenerate = async () => {
-    if (!description.trim()) {
-      alert("Please enter a project description.");
+    loading,
+
+    project,
+
+    stage,
+
+    agent,
+    agentMessage,
+
+    generateProject,
+    regenerateCurrentDocument,
+    approveCurrentDocument,
+  } = useWorkflow();
+
+  useEffect(() => {
+    if (!project || stage === "IDLE") {
       return;
     }
 
-    try {
-      setLoading(true);
+    const timeout = window.setTimeout(() => {
+      agentPanelRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 120);
 
-      const createdProject =
-        await createProject(description);
-
-      const projectDetails =
-        await getProject(createdProject.id);
-
-      setProject(projectDetails);
-    } catch (error) {
-      console.error(error);
-
-      alert("Failed to create project.");
-    } finally {
-      setLoading(false);
-    }
-  };
+    return () =>
+      window.clearTimeout(timeout);
+  }, [project, stage]);
 
   return (
     <>
       <Navbar />
 
-      <main className="relative overflow-hidden">
+      <main className="min-h-screen overflow-hidden bg-[#07090c]">
+        <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_20%_0%,rgba(251,191,36,0.10),transparent_28%),radial-gradient(circle_at_80%_18%,rgba(45,212,191,0.08),transparent_30%),linear-gradient(180deg,rgba(17,19,23,0.45),rgba(7,9,12,1))]" />
 
-        {/* Background Glow */}
-        <div className="absolute left-1/2 top-24 h-[450px] w-[450px] -translate-x-1/2 rounded-full bg-blue-600/10 blur-[160px]" />
-
-        <div className="relative mx-auto w-full max-w-6xl px-8 pb-20 pt-10">
-
+        <div className="relative mx-auto w-full max-w-7xl px-5 pb-20 pt-8 md:px-8">
           <HeroSection />
 
-          <ProjectInput
-            description={description}
-            loading={loading}
-            onChange={setDescription}
-            onGenerate={handleGenerate}
-          />
+          <div className="mt-4 space-y-6">
+            <ProjectInput
+              description={description}
+              loading={loading}
+              onChange={setDescription}
+              onGenerate={generateProject}
+            />
 
-          {(loading || project) && (
-            <div className="mt-12 space-y-8">
+            <DocumentStatusBoard
+              stage={stage}
+              documents={project?.documents ?? []}
+            />
 
+            <div className="grid gap-6 xl:grid-cols-2">
               <WorkflowTimeline
-                stage="PRD"
-              />
-
-              <AgentPanel
-                agent="Product Manager"
-                loading={loading}
-                message={
-                  loading
-                    ? "I'm analyzing your project requirements and preparing a comprehensive Product Requirements Document."
-                    : "I've completed the Product Requirements Document. Please review it carefully. If you'd like any changes, provide your feedback and regenerate it. Otherwise, approve it so I can hand it over to the System Architect."
+                stage={stage}
+                documents={
+                  project?.documents ?? []
                 }
               />
 
-              {project && (
-                <DocumentViewer
-                  title={
-                    project.documents[0].title
-                  }
-                  version={
-                    project.documents[0].version
-                  }
-                  content={
-                    project.documents[0].content
-                  }
-                />
-              )}
+              <AgentTimeline
+                stage={stage}
+                documents={
+                  project?.documents ?? []
+                }
+              />
             </div>
+          </div>
+
+          {project && (
+            <ProjectOverview
+              project={project}
+              stage={stage}
+              loading={loading}
+              agent={agent}
+              agentMessage={agentMessage}
+              feedback={feedback}
+              onFeedbackChange={setFeedback}
+              onRegenerate={
+                regenerateCurrentDocument
+              }
+              onApprove={
+                approveCurrentDocument
+              }
+              agentPanelRef={agentPanelRef}
+            />
           )}
         </div>
       </main>

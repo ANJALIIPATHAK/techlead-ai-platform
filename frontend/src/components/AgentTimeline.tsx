@@ -1,108 +1,120 @@
 import { Fragment } from "react";
 
-import { motion } from "framer-motion";
-import { CheckCircle2, Circle, FileText } from "lucide-react";
+import { Bot, CheckCircle2, Circle } from "lucide-react";
 
 import type { Document } from "../types/project";
 import type { WorkflowStage } from "../types/workflow";
 import {
-  documentSteps,
   getDocumentProgressStatus,
+  type DocumentType,
 } from "../utils/workflowDocuments";
 
-interface WorkflowTimelineProps {
+interface Props {
   stage: WorkflowStage;
   documents?: Document[];
 }
 
-function WorkflowTimeline({
+const agents: Array<{
+  label: string;
+  documentType: DocumentType;
+}> = [
+  {
+    label: "Product Manager",
+    documentType: "PRD",
+  },
+  {
+    label: "System Architect",
+    documentType: "SYSTEM_DESIGN",
+  },
+  {
+    label: "Program Manager",
+    documentType: "SPRINT_PLAN",
+  },
+];
+
+function AgentTimeline({
   stage,
   documents = [],
-}: WorkflowTimelineProps) {
+}: Props) {
   return (
-    <motion.section
-      initial={{ opacity: 0, y: 15 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl border border-[#2a2f38] bg-[#111317]/90 p-6 shadow-xl shadow-black/20"
-    >
+    <section className="rounded-2xl border border-[#2a2f38] bg-[#111317]/90 p-6 shadow-xl shadow-black/20">
       <div className="mb-7 flex items-center gap-3">
-        <div className="rounded-xl bg-amber-400/10 p-2 text-amber-200">
-          <FileText size={20} />
+        <div className="rounded-xl bg-violet-400/10 p-2 text-violet-200">
+          <Bot size={20} />
         </div>
 
         <h2 className="text-lg font-semibold text-white">
-          Document Timeline
+          Agent Timeline
         </h2>
       </div>
 
       <div className="grid gap-5 md:grid-cols-[1fr_auto_1fr_auto_1fr] md:items-start">
-        {documentSteps.map((item, index) => {
+        {agents.map((agent, index) => {
           const status =
             getDocumentProgressStatus(
               documents,
-              item.type,
+              agent.documentType,
               stage,
             );
-          const isApproved =
+          const isCompleted =
             status === "APPROVED";
           const isActive =
             status === "GENERATING" ||
             status === "PENDING_APPROVAL";
 
           return (
-            <Fragment key={item.type}>
+            <Fragment key={agent.label}>
               <div
                 className="flex items-center gap-4 md:flex-col md:text-center"
               >
                 <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 ${
-                    isApproved
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold ${
+                    isCompleted
                       ? "border-teal-400 bg-teal-400/15 text-teal-200"
                       : isActive
-                        ? "border-amber-300 bg-amber-300/10 text-amber-200"
+                        ? "border-violet-300 bg-violet-300/10 text-violet-100"
                         : "border-[#4a505b] bg-[#20242b] text-slate-500"
                   }`}
                 >
-                  {isApproved ? (
+                  {isCompleted ? (
                     <CheckCircle2 size={24} />
-                  ) : (
+                  ) : isActive ? (
                     <Circle
                       size={18}
-                      className={
-                        isActive
-                          ? "fill-current"
-                          : undefined
-                      }
+                      className="fill-current"
                     />
+                  ) : (
+                    index + 1
                   )}
                 </div>
 
                 <div>
                   <p
                     className={`text-sm font-semibold ${
-                      isApproved
+                      isCompleted
                         ? "text-teal-100"
                         : isActive
-                          ? "text-amber-100"
+                          ? "text-violet-100"
                           : "text-slate-400"
                     }`}
                   >
-                    {item.label}
+                    {agent.label}
                   </p>
 
-                  <p className="mt-1 text-xs capitalize text-slate-500">
-                    {status
-                      .toLowerCase()
-                      .replace("_", " ")}
+                  <p className="mt-1 text-xs text-slate-500">
+                    {isCompleted
+                      ? "Completed"
+                      : isActive
+                        ? "Active"
+                        : "Waiting"}
                   </p>
                 </div>
               </div>
 
-              {index !==
-                documentSteps.length - 1 && (
+              {index !== agents.length - 1 && (
                 <div
                   className={`hidden h-[2px] w-24 self-center md:block ${
-                    isApproved
+                    isCompleted
                       ? "bg-teal-400"
                       : "bg-[#3a3f49]"
                   }`}
@@ -112,8 +124,8 @@ function WorkflowTimeline({
           );
         })}
       </div>
-    </motion.section>
+    </section>
   );
 }
 
-export default WorkflowTimeline;
+export default AgentTimeline;

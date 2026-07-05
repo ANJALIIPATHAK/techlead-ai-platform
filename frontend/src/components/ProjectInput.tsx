@@ -1,5 +1,9 @@
 import { motion } from "framer-motion";
-import { ArrowRight, Loader2, Sparkles } from "lucide-react";
+import {
+  ArrowRight,
+  Loader2,
+  Sparkles,
+} from "lucide-react";
 
 interface ProjectInputProps {
   description: string;
@@ -19,57 +23,55 @@ function ProjectInput({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ delay: 0.15 }}
-      className="mx-auto mt-8 max-w-5xl rounded-3xl border border-zinc-800 bg-zinc-900/70 p-8 shadow-2xl backdrop-blur-xl"
+      className="rounded-2xl border border-[#2a2f38] bg-[#111317]/92 p-6 shadow-xl shadow-black/20"
     >
-      <div className="mb-6 flex items-center gap-3">
-        <div className="rounded-xl bg-blue-500/10 p-2">
-          <Sparkles
-            size={20}
-            className="text-blue-400"
-          />
+      <div className="mb-5 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-amber-400/10 p-2 text-amber-200">
+            <Sparkles size={20} />
+          </div>
+
+          <div>
+            <h2 className="text-xl font-semibold text-white">
+              Describe Your Software Project
+            </h2>
+
+            <p className="text-sm text-slate-400">
+              Enterprise planning starts from one clear requirement.
+            </p>
+          </div>
         </div>
 
-        <div>
-          <h2 className="text-xl font-semibold text-white">
-            Describe Your Software Project
-          </h2>
-
-          <p className="text-sm text-zinc-400">
-            Give our AI Engineering Team as much context as
-            possible.
-          </p>
-        </div>
-      </div>
-
-      <textarea
-        value={description}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Example: Build an AI-powered healthcare appointment management platform that supports patients, doctors, administrators, notifications, analytics dashboards, secure APIs and scalable cloud deployment..."
-        className="h-64 w-full resize-none rounded-2xl border border-zinc-700 bg-zinc-950 px-6 py-5 text-base text-white outline-none transition-all placeholder:text-zinc-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-      />
-
-      <div className="mt-8 flex justify-center">
         <button
           onClick={onGenerate}
           disabled={loading}
-          className="flex items-center gap-3 rounded-2xl bg-blue-600 px-8 py-4 font-semibold text-white transition-all duration-300 hover:scale-[1.02] hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-xl bg-amber-300 px-5 py-3 text-sm font-semibold text-slate-950 shadow-lg shadow-amber-950/30 hover:bg-amber-200 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
             <>
               <Loader2
-                size={20}
+                size={18}
                 className="animate-spin"
               />
-              Generating...
+              Generating
             </>
           ) : (
             <>
               Generate Project
-              <ArrowRight size={20} />
+              <ArrowRight size={18} />
             </>
           )}
         </button>
       </div>
+
+      <textarea
+        value={description}
+        onChange={(e) =>
+          onChange(e.target.value)
+        }
+        placeholder="Example: Build an AI-powered fleet management platform for enterprise operations, real-time dashboards, maintenance scheduling, route optimization, analytics, and secure APIs..."
+        className="min-h-44 w-full resize-y rounded-xl border border-[#343a44] bg-[#0b0d10] px-5 py-4 text-base leading-7 text-white outline-none transition placeholder:text-slate-600 focus:border-amber-300 focus:ring-2 focus:ring-amber-300/15"
+      />
     </motion.section>
   );
 }

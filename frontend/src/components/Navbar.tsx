@@ -2,34 +2,34 @@ import { Bot, CheckCircle2 } from "lucide-react";
 
 function Navbar() {
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-xl">
-      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-8">
-        <div className="flex items-center gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 shadow-lg shadow-blue-600/20">
+    <header className="sticky top-0 z-50 border-b border-[#242933] bg-[#090b0e]/85 backdrop-blur-xl">
+      <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between gap-6 px-5 md:px-8">
+        <div className="flex min-w-0 items-center gap-4">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-300 via-violet-300 to-teal-300 shadow-lg shadow-black/30">
             <Bot
-              size={28}
-              className="text-white"
+              size={25}
+              className="text-slate-950"
             />
           </div>
 
-          <div>
-            <h1 className="text-xl font-bold tracking-tight text-white">
+          <div className="min-w-0">
+            <h1 className="truncate text-lg font-semibold tracking-tight text-white md:text-xl">
               TechLead AI Platform
             </h1>
 
-            <p className="text-sm text-zinc-400">
+            <p className="truncate text-sm text-slate-400">
               Multi-Agent Software Planning
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2">
+        <div className="hidden items-center gap-2 rounded-full border border-teal-400/30 bg-teal-400/10 px-4 py-2 sm:flex">
           <CheckCircle2
             size={16}
-            className="text-emerald-400"
+            className="text-teal-300"
           />
 
-          <span className="text-sm font-medium text-emerald-300">
+          <span className="text-sm font-medium text-teal-200">
             Backend Connected
           </span>
         </div>
