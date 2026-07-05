@@ -6,7 +6,7 @@ from app.models.document import Document, DocumentType
 from app.models.project import Project
 from app.services.approval_service import ApprovalService
 from app.services.document_service import DocumentService
-from app.services.gemini_llm_service import GeminiLLMService
+from app.services.llm_factory import LLMFactory
 
 
 class ProductManagerService:
@@ -19,7 +19,7 @@ class ProductManagerService:
         Generates the initial PRD for a project.
         """
 
-        llm = GeminiLLMService()
+        llm = LLMFactory.create()
         agent = ProductManagerAgent(llm)
 
         prd = agent.generate(
@@ -52,7 +52,7 @@ class ProductManagerService:
         Regenerates the latest PRD based on reviewer feedback.
         """
 
-        llm = GeminiLLMService()
+        llm = LLMFactory.create()
         agent = ProductManagerAgent(llm)
 
         latest_prd = DocumentService.get_latest_document(

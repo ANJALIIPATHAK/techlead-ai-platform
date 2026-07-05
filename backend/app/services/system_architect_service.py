@@ -6,7 +6,7 @@ from app.models.document import Document, DocumentType
 from app.models.project import Project
 from app.services.approval_service import ApprovalService
 from app.services.document_service import DocumentService
-from app.services.gemini_llm_service import GeminiLLMService
+from app.services.llm_factory import LLMFactory
 
 
 class SystemArchitectService:
@@ -20,7 +20,7 @@ class SystemArchitectService:
         Generates the initial System Design from an approved PRD.
         """
 
-        llm = GeminiLLMService()
+        llm = LLMFactory.create()
         agent = SystemArchitectAgent(llm)
 
         system_design = agent.generate(
@@ -53,7 +53,7 @@ class SystemArchitectService:
         Regenerates the latest System Design based on reviewer feedback.
         """
 
-        llm = GeminiLLMService()
+        llm = LLMFactory.create()
         agent = SystemArchitectAgent(llm)
 
         latest_system_design = DocumentService.get_latest_document(

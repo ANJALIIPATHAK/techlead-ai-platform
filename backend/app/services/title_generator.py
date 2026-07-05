@@ -1,13 +1,13 @@
 from textwrap import shorten
 
-from app.services.gemini_llm_service import GeminiLLMService
+from app.services.llm_factory import LLMFactory
 
 
 class TitleGenerator:
     @staticmethod
     def generate(description: str) -> str:
         """
-        Generates a concise project title using Gemini.
+        Generates a concise project title using the configured LLM.
         Falls back to a shortened description if the LLM fails.
         """
 
@@ -27,7 +27,7 @@ Project Description:
 """
 
         try:
-            llm = GeminiLLMService()
+            llm = LLMFactory.create()
 
             title = llm.generate(
                 system_prompt="You generate concise software project titles.",

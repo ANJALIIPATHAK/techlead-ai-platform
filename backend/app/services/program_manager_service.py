@@ -6,7 +6,7 @@ from app.models.document import Document, DocumentType
 from app.models.project import Project
 from app.services.approval_service import ApprovalService
 from app.services.document_service import DocumentService
-from app.services.gemini_llm_service import GeminiLLMService
+from app.services.llm_factory import LLMFactory
 
 
 class ProgramManagerService:
@@ -21,7 +21,7 @@ class ProgramManagerService:
         System Design Document.
         """
 
-        llm = GeminiLLMService()
+        llm = LLMFactory.create()
         agent = ProgramManagerAgent(llm)
 
         sprint_plan = agent.generate(
@@ -54,7 +54,7 @@ class ProgramManagerService:
         Regenerates the latest Sprint Plan based on reviewer feedback.
         """
 
-        llm = GeminiLLMService()
+        llm = LLMFactory.create()
         agent = ProgramManagerAgent(llm)
 
         latest_sprint_plan = DocumentService.get_latest_document(
