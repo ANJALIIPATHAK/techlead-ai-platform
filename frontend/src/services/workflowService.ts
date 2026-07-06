@@ -10,7 +10,7 @@ import {
 } from "../api/projects";
 
 import type { ProjectDetail } from "../types/project";
-import type { WorkflowStage } from "../types/workflow";
+import type { DocumentType } from "../utils/workflowDocuments";
 
 export async function generateProject(
   description: string,
@@ -28,22 +28,22 @@ export async function refreshProject(
 
 export async function regenerateDocument(
   projectId: string,
-  stage: WorkflowStage,
+  documentType: DocumentType,
   feedback: string,
 ): Promise<ProjectDetail> {
-  switch (stage) {
-    case "REVIEW_PRD":
+  switch (documentType) {
+    case "PRD":
       await regeneratePrd(projectId, feedback);
       break;
 
-    case "REVIEW_SYSTEM_DESIGN":
+    case "SYSTEM_DESIGN":
       await regenerateSystemDesign(
         projectId,
         feedback,
       );
       break;
 
-    case "REVIEW_SPRINT_PLAN":
+    case "SPRINT_PLAN":
       await regenerateSprintPlan(
         projectId,
         feedback,
@@ -52,7 +52,7 @@ export async function regenerateDocument(
 
     default:
       throw new Error(
-        `Cannot regenerate during stage: ${stage}`,
+        `Cannot regenerate document type: ${documentType}`,
       );
   }
 
@@ -61,24 +61,24 @@ export async function regenerateDocument(
 
 export async function approveDocument(
   projectId: string,
-  stage: WorkflowStage,
+  documentType: DocumentType,
 ): Promise<ProjectDetail> {
-  switch (stage) {
-    case "REVIEW_PRD":
+  switch (documentType) {
+    case "PRD":
       await approvePrd(projectId);
       break;
 
-    case "REVIEW_SYSTEM_DESIGN":
+    case "SYSTEM_DESIGN":
       await approveSystemDesign(projectId);
       break;
 
-    case "REVIEW_SPRINT_PLAN":
+    case "SPRINT_PLAN":
       await approveSprintPlan(projectId);
       break;
 
     default:
       throw new Error(
-        `Cannot approve during stage: ${stage}`,
+        `Cannot approve document type: ${documentType}`,
       );
   }
 

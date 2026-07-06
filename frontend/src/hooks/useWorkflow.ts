@@ -8,6 +8,7 @@ import {
 } from "../services/workflowService";
 import type { ProjectDetail } from "../types/project";
 import type { WorkflowStage } from "../types/workflow";
+import type { DocumentType } from "../utils/workflowDocuments";
 
 const WORKFLOW_STORAGE_KEY = "techlead-workflow-state";
 
@@ -47,6 +48,42 @@ function getLatestDocumentVersion(
     .sort((a, b) => b.version - a.version)[0];
 
   return latestDocument?.version ?? 0;
+}
+
+function resolveDocumentType(
+  stage: WorkflowStage,
+  documents: ProjectDetail["documents"],
+): DocumentType {
+  if (stage === "REVIEW_PRD" || stage === "GENERATING_PRD") {
+    return "PRD";
+  }
+
+  if (
+    stage === "REVIEW_SYSTEM_DESIGN" ||
+    stage === "GENERATING_SYSTEM_DESIGN"
+  ) {
+    return "SYSTEM_DESIGN";
+  }
+
+  if (
+    stage === "REVIEW_SPRINT_PLAN" ||
+    stage === "GENERATING_SPRINT_PLAN"
+  ) {
+    return "SPRINT_PLAN";
+  }
+
+  const latestDocument = [...documents]
+    .sort((a, b) => b.version - a.version)[0];
+
+  if (latestDocument?.type === "SPRINT_PLAN") {
+    return "SPRINT_PLAN";
+  }
+
+  if (latestDocument?.type === "SYSTEM_DESIGN") {
+    return "SYSTEM_DESIGN";
+  }
+
+  return "PRD";
 }
 
 export function useWorkflow() {
@@ -299,29 +336,27 @@ export function useWorkflow() {
       const currentFeedback = feedback;
       setFeedback("");
 
+      const targetDocumentType = resolveDocumentType(stage, project.documents);
       const generatingStage =
-        stage === "REVIEW_PRD"
+        targetDocumentType === "PRD"
           ? "GENERATING_PRD"
-          : stage === "REVIEW_SYSTEM_DESIGN"
+          : targetDocumentType === "SYSTEM_DESIGN"
             ? "GENERATING_SYSTEM_DESIGN"
             : "GENERATING_SPRINT_PLAN";
 
-      const expectedDocumentType =
-        generatingStage === "GENERATING_PRD"
-          ? "PRD"
-          : generatingStage === "GENERATING_SYSTEM_DESIGN"
-            ? "SYSTEM_DESIGN"
-            : "SPRINT_PLAN";
-
-      pendingDocumentTypeRef.current = expectedDocumentType;
+      pendingDocumentTypeRef.current = targetDocumentType;
       pendingDocumentVersionRef.current = getLatestDocumentVersion(
         project.documents,
-        expectedDocumentType,
+        targetDocumentType,
       );
 
       setStage(generatingStage);
 
-      const updatedProject = await regenerateDocument(project.id, stage, currentFeedback);
+      const updatedProject = await regenerateDocument(
+        project.id,
+        targetDocumentType,
+        currentFeedback,
+      );
       setProject(updatedProject);
       persistState(updatedProject, generatingStage, description, "");
     } catch {
@@ -336,51 +371,35 @@ export function useWorkflow() {
 
     try {
       setLoading(true);
-      const currentStage = stage;
-      const nextGeneratingStage =
-        currentStage === "REVIEW_PRD"
-          ? "GENERATING_SYSTEM_DESIGN"
-          : currentStage === "REVIEW_SYSTEM_DESIGN"
-            ? "GENERATING_SPRINT_PLAN"
-            : null;
+      const targetDocumentType = resolveDocumentType(stage, project.documents);
 
-      if (nextGeneratingStage) {
-        pendingDocumentTypeRef.current =
-          nextGeneratingStage === "GENERATING_SYSTEM_DESIGN"
-            ? "SYSTEM_DESIGN"
-            : "SPRINT_PLAN";
+      if (targetDocumentType === "PRD") {
+        pendingDocumentTypeRef.current = "SYSTEM_DESIGN";
         pendingDocumentVersionRef.current = getLatestDocumentVersion(
           project.documents,
-          pendingDocumentTypeRef.current,
+          "SYSTEM_DESIGN",
         );
-        setStage(nextGeneratingStage);
-      }
-
-      const updatedProject = await approveDocument(project.id, currentStage);
-      setProject(updatedProject);
-
-      let nextStage: WorkflowStage = currentStage;
-      switch (currentStage) {
-        case "REVIEW_PRD":
-          nextStage = "REVIEW_SYSTEM_DESIGN";
-          break;
-        case "REVIEW_SYSTEM_DESIGN":
-          nextStage = "REVIEW_SPRINT_PLAN";
-          break;
-        case "REVIEW_SPRINT_PLAN":
-          nextStage = "COMPLETED";
-          break;
-      }
-
-      if (currentStage === "REVIEW_PRD") {
         setStage("GENERATING_SYSTEM_DESIGN");
-        persistState(updatedProject, "GENERATING_SYSTEM_DESIGN", description, feedback);
-      } else if (currentStage === "REVIEW_SYSTEM_DESIGN") {
+      } else if (targetDocumentType === "SYSTEM_DESIGN") {
+        pendingDocumentTypeRef.current = "SPRINT_PLAN";
+        pendingDocumentVersionRef.current = getLatestDocumentVersion(
+          project.documents,
+          "SPRINT_PLAN",
+        );
         setStage("GENERATING_SPRINT_PLAN");
-        persistState(updatedProject, "GENERATING_SPRINT_PLAN", description, feedback);
       } else {
-        setStage(nextStage);
-        persistState(updatedProject, nextStage, description, feedback);
+        pendingDocumentTypeRef.current = null;
+        pendingDocumentVersionRef.current = 0;
+      }
+
+      const updatedProject = await approveDocument(project.id, targetDocumentType);
+      setProject(updatedProject);
+      persistState(updatedProject, stage, description, feedback);
+
+      if (targetDocumentType === "SPRINT_PLAN") {
+        const completedStage = inferWorkflowStage(updatedProject.documents);
+        setStage(completedStage);
+        persistState(updatedProject, completedStage, description, feedback);
       }
     } catch {
       setLoading(false);
