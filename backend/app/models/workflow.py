@@ -47,6 +47,12 @@ class Workflow(PersistentModel):
     error_message: Mapped[str | None] = mapped_column(
         nullable=True,
     )
+    
+    review_comment: Mapped[str | None] = mapped_column(
+
+        nullable=True,
+
+    )
 
     retry_count: Mapped[int] = mapped_column(
         nullable=False,
