@@ -1,83 +1,265 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   approveDocument,
   generateProject as generateProjectService,
+  refreshProject,
   regenerateDocument,
 } from "../services/workflowService";
-
 import type { ProjectDetail } from "../types/project";
 import type { WorkflowStage } from "../types/workflow";
 
+const WORKFLOW_STORAGE_KEY = "techlead-workflow-state";
+
+function inferWorkflowStage(documents: ProjectDetail["documents"]): WorkflowStage {
+  const latestDocument = [...documents]
+    .sort((a, b) => b.version - a.version)[0];
+
+  if (!latestDocument) {
+    return "IDLE";
+  }
+
+  if (latestDocument.type === "SPRINT_PLAN") {
+    return latestDocument.status === "APPROVED" ? "COMPLETED" : "REVIEW_SPRINT_PLAN";
+  }
+
+  if (latestDocument.type === "SYSTEM_DESIGN") {
+    return latestDocument.status === "APPROVED" ? "REVIEW_SPRINT_PLAN" : "REVIEW_SYSTEM_DESIGN";
+  }
+
+  return latestDocument.status === "APPROVED" ? "REVIEW_SYSTEM_DESIGN" : "REVIEW_PRD";
+}
+
+function isGeneratingStage(stage: WorkflowStage) {
+  return (
+    stage === "GENERATING_PRD" ||
+    stage === "GENERATING_SYSTEM_DESIGN" ||
+    stage === "GENERATING_SPRINT_PLAN"
+  );
+}
+
+function getLatestDocumentVersion(
+  documents: ProjectDetail["documents"],
+  type: "PRD" | "SYSTEM_DESIGN" | "SPRINT_PLAN",
+) {
+  const latestDocument = [...documents]
+    .filter((document) => document.type === type)
+    .sort((a, b) => b.version - a.version)[0];
+
+  return latestDocument?.version ?? 0;
+}
+
 export function useWorkflow() {
   const [description, setDescription] = useState("");
-
   const [feedback, setFeedback] = useState("");
-
   const [loading, setLoading] = useState(false);
+  const [project, setProject] = useState<ProjectDetail | null>(null);
+  const [stage, setStage] = useState<WorkflowStage>("IDLE");
+  const pendingDocumentTypeRef = useRef<"PRD" | "SYSTEM_DESIGN" | "SPRINT_PLAN" | null>(null);
+  const pendingDocumentVersionRef = useRef(0);
 
-  const [project, setProject] =
-    useState<ProjectDetail | null>(null);
+  const persistState = (
+    nextProject: ProjectDetail | null,
+    nextStage: WorkflowStage,
+    nextDescription: string,
+    nextFeedback: string,
+  ) => {
+    window.localStorage.setItem(
+      WORKFLOW_STORAGE_KEY,
+      JSON.stringify({
+        projectId: nextProject?.id ?? null,
+        stage: nextStage,
+        description: nextDescription,
+        feedback: nextFeedback,
+      }),
+    );
+  };
 
-  const [stage, setStage] =
-    useState<WorkflowStage>("IDLE");
+  const restoreProject = useCallback(
+    async (
+      projectId: string,
+      fallbackStage?: WorkflowStage,
+      fallbackDescription?: string,
+      fallbackFeedback?: string,
+    ) => {
+      try {
+        setLoading(true);
+        const restoredProject = await refreshProject(projectId);
+        const restoredStage = inferWorkflowStage(restoredProject.documents) || fallbackStage || "IDLE";
+
+        setProject(restoredProject);
+        setDescription(restoredProject.description || fallbackDescription || "");
+        setFeedback(fallbackFeedback ?? "");
+        setStage(restoredStage);
+        persistState(restoredProject, restoredStage, restoredProject.description || fallbackDescription || "", fallbackFeedback ?? "");
+      } catch {
+        window.localStorage.removeItem(WORKFLOW_STORAGE_KEY);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [],
+  );
+
+  useEffect(() => {
+    const initializeWorkflow = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const urlProjectId =
+        urlParams.get("project_id") ||
+        (() => {
+          const match = window.location.pathname.match(/\/projects\/([0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12})/);
+          return match ? match[1] : null;
+        })();
+
+      if (urlProjectId) {
+        await restoreProject(urlProjectId);
+        return;
+      }
+
+      const saved = window.localStorage.getItem(WORKFLOW_STORAGE_KEY);
+
+      if (!saved) {
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(saved) as {
+          projectId?: string | null;
+          stage?: WorkflowStage;
+          description?: string;
+          feedback?: string;
+        };
+
+        if (!parsed.projectId) {
+          return;
+        }
+
+        await restoreProject(parsed.projectId, parsed.stage, parsed.description, parsed.feedback);
+      } catch {
+        window.localStorage.removeItem(WORKFLOW_STORAGE_KEY);
+      }
+    };
+
+    void initializeWorkflow();
+  }, [restoreProject]);
+
+  useEffect(() => {
+    if (!project?.id || !isGeneratingStage(stage)) {
+      return;
+    }
+
+    let cancelled = false;
+    let pollCount = 0;
+    const maxPolls = 20;
+
+    const pollForUpdates = async () => {
+      if (cancelled || pollCount >= maxPolls) {
+        return;
+      }
+
+      try {
+        const latestProject = await refreshProject(project.id);
+
+        if (cancelled) {
+          return;
+        }
+
+        setProject(latestProject);
+
+        const expectedType = pendingDocumentTypeRef.current;
+        const latestExpectedVersion = expectedType
+          ? getLatestDocumentVersion(latestProject.documents, expectedType)
+          : 0;
+
+        const nextStage = inferWorkflowStage(latestProject.documents) || stage;
+
+        if (
+          expectedType &&
+          latestExpectedVersion > pendingDocumentVersionRef.current
+        ) {
+          setStage(nextStage);
+          setLoading(false);
+          pendingDocumentTypeRef.current = null;
+          pendingDocumentVersionRef.current = 0;
+          persistState(latestProject, nextStage, description, feedback);
+          return;
+        }
+
+        pollCount += 1;
+
+        if (pollCount < maxPolls) {
+          window.setTimeout(() => {
+            void pollForUpdates();
+          }, 3000);
+        }
+      } catch (error) {
+        console.error("Failed to refresh workflow project", error);
+
+        pollCount += 1;
+
+        if (!cancelled && pollCount < maxPolls) {
+          window.setTimeout(() => {
+            void pollForUpdates();
+          }, 3000);
+        }
+      }
+    };
+
+    void pollForUpdates();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [project?.id, stage, description, feedback]);
 
   const workflowInfo = useMemo(() => {
     switch (stage) {
       case "GENERATING_PRD":
         return {
           agent: "Product Manager",
-          message:
-            "I'm understanding your project requirements and drafting the Product Requirements Document.",
+          message: "I’m drafting the product requirements document now.",
         };
 
       case "REVIEW_PRD":
         return {
           agent: "Product Manager",
-          message:
-            "I've completed the Product Requirements Document. Review it below. If you'd like any improvements, provide feedback and regenerate it. Otherwise, approve it so I can hand it over to the System Architect.",
+          message: "The PRD is ready. Review it and either regenerate it with feedback or approve it to continue.",
         };
 
       case "GENERATING_SYSTEM_DESIGN":
         return {
           agent: "System Architect",
-          message:
-            "I've received the approved PRD and I'm preparing the System Design.",
+          message: "I’m turning the approved requirements into a system design.",
         };
 
       case "REVIEW_SYSTEM_DESIGN":
         return {
           agent: "System Architect",
-          message:
-            "The System Design is ready. Review it and either regenerate it with feedback or approve it to continue.",
+          message: "The System Design is ready. Review it and either regenerate it with feedback or approve it to continue.",
         };
 
       case "GENERATING_SPRINT_PLAN":
         return {
           agent: "Program Manager",
-          message:
-            "I'm breaking the approved system into implementation sprints.",
+          message: "I’m breaking the approved system into implementation sprints.",
         };
 
       case "REVIEW_SPRINT_PLAN":
         return {
           agent: "Program Manager",
-          message:
-            "The Sprint Plan is ready. Review it before completing the workflow.",
+          message: "The Sprint Plan is ready. Review it before completing the workflow.",
         };
 
       case "COMPLETED":
         return {
           agent: "TechLead AI",
-          message:
-            "Congratulations! Your software planning workflow has been completed successfully.",
+          message: "Congratulations! Your software planning workflow has been completed successfully.",
         };
 
       default:
         return {
           agent: "Product Manager",
-          message:
-            "Describe your project to get started.",
+          message: "Describe your project to get started.",
         };
     }
   }, [stage]);
@@ -90,24 +272,22 @@ export function useWorkflow() {
 
     try {
       setLoading(true);
-
+      pendingDocumentTypeRef.current = "PRD";
+      pendingDocumentVersionRef.current = 0;
       setStage("GENERATING_PRD");
-
-      const project =
-        await generateProjectService(
-          description,
-        );
-
-      setProject(project);
-
-      setStage("REVIEW_PRD");
-    } finally {
+      const createdProject = await generateProjectService(description);
+      setProject(createdProject);
+      persistState(createdProject, "GENERATING_PRD", description, "");
+      setFeedback("");
+    } catch {
       setLoading(false);
     }
   }
 
   async function regenerateCurrentDocument() {
-    if (!project) return;
+    if (!project) {
+      return;
+    }
 
     if (!feedback.trim()) {
       alert("Please provide feedback.");
@@ -116,114 +296,120 @@ export function useWorkflow() {
 
     try {
       setLoading(true);
-
       const currentFeedback = feedback;
-
       setFeedback("");
 
       const generatingStage =
         stage === "REVIEW_PRD"
           ? "GENERATING_PRD"
-          : stage ===
-            "REVIEW_SYSTEM_DESIGN"
-          ? "GENERATING_SYSTEM_DESIGN"
-          : "GENERATING_SPRINT_PLAN";
+          : stage === "REVIEW_SYSTEM_DESIGN"
+            ? "GENERATING_SYSTEM_DESIGN"
+            : "GENERATING_SPRINT_PLAN";
+
+      const expectedDocumentType =
+        generatingStage === "GENERATING_PRD"
+          ? "PRD"
+          : generatingStage === "GENERATING_SYSTEM_DESIGN"
+            ? "SYSTEM_DESIGN"
+            : "SPRINT_PLAN";
+
+      pendingDocumentTypeRef.current = expectedDocumentType;
+      pendingDocumentVersionRef.current = getLatestDocumentVersion(
+        project.documents,
+        expectedDocumentType,
+      );
 
       setStage(generatingStage);
 
-      const updatedProject =
-        await regenerateDocument(
-          project.id,
-          stage,
-          currentFeedback,
-        );
-
+      const updatedProject = await regenerateDocument(project.id, stage, currentFeedback);
       setProject(updatedProject);
-
-      const reviewStage =
-        stage === "REVIEW_PRD"
-          ? "REVIEW_PRD"
-          : stage ===
-            "REVIEW_SYSTEM_DESIGN"
-          ? "REVIEW_SYSTEM_DESIGN"
-          : "REVIEW_SPRINT_PLAN";
-
-      setStage(reviewStage);
-    } finally {
+      persistState(updatedProject, generatingStage, description, "");
+    } catch {
       setLoading(false);
     }
   }
 
   async function approveCurrentDocument() {
-    if (!project) return;
+    if (!project) {
+      return;
+    }
 
     try {
       setLoading(true);
-
       const currentStage = stage;
       const nextGeneratingStage =
         currentStage === "REVIEW_PRD"
           ? "GENERATING_SYSTEM_DESIGN"
-          : currentStage ===
-              "REVIEW_SYSTEM_DESIGN"
+          : currentStage === "REVIEW_SYSTEM_DESIGN"
             ? "GENERATING_SPRINT_PLAN"
             : null;
 
       if (nextGeneratingStage) {
+        pendingDocumentTypeRef.current =
+          nextGeneratingStage === "GENERATING_SYSTEM_DESIGN"
+            ? "SYSTEM_DESIGN"
+            : "SPRINT_PLAN";
+        pendingDocumentVersionRef.current = getLatestDocumentVersion(
+          project.documents,
+          pendingDocumentTypeRef.current,
+        );
         setStage(nextGeneratingStage);
       }
 
-      const updatedProject =
-        await approveDocument(
-          project.id,
-          currentStage,
-        );
-
+      const updatedProject = await approveDocument(project.id, currentStage);
       setProject(updatedProject);
 
+      let nextStage: WorkflowStage = currentStage;
       switch (currentStage) {
         case "REVIEW_PRD":
-          setStage(
-            "REVIEW_SYSTEM_DESIGN",
-          );
+          nextStage = "REVIEW_SYSTEM_DESIGN";
           break;
-
         case "REVIEW_SYSTEM_DESIGN":
-          setStage(
-            "REVIEW_SPRINT_PLAN",
-          );
+          nextStage = "REVIEW_SPRINT_PLAN";
           break;
-
         case "REVIEW_SPRINT_PLAN":
-          setStage("COMPLETED");
+          nextStage = "COMPLETED";
           break;
       }
-    } finally {
+
+      if (currentStage === "REVIEW_PRD") {
+        setStage("GENERATING_SYSTEM_DESIGN");
+        persistState(updatedProject, "GENERATING_SYSTEM_DESIGN", description, feedback);
+      } else if (currentStage === "REVIEW_SYSTEM_DESIGN") {
+        setStage("GENERATING_SPRINT_PLAN");
+        persistState(updatedProject, "GENERATING_SPRINT_PLAN", description, feedback);
+      } else {
+        setStage(nextStage);
+        persistState(updatedProject, nextStage, description, feedback);
+      }
+    } catch {
       setLoading(false);
     }
+  }
+
+  function resetWorkflow() {
+    setDescription("");
+    setFeedback("");
+    setProject(null);
+    setStage("IDLE");
+    pendingDocumentTypeRef.current = null;
+    pendingDocumentVersionRef.current = 0;
+    window.localStorage.removeItem(WORKFLOW_STORAGE_KEY);
   }
 
   return {
     description,
     setDescription,
-
     feedback,
     setFeedback,
-
     loading,
-
     project,
-
     stage,
-
     agent: workflowInfo.agent,
-
     agentMessage: workflowInfo.message,
-
     generateProject,
-
     regenerateCurrentDocument,
-
     approveCurrentDocument,
+    resetWorkflow,
   };
 }

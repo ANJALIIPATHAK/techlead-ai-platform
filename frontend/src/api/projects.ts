@@ -1,4 +1,5 @@
 import apiClient from "./client";
+import type { Project } from "../types/project";
 
 export interface RegenerateRequest {
   review_comment: string;
@@ -8,6 +9,12 @@ export const createProject = async (description: string) => {
   const response = await apiClient.post("/projects", {
     description,
   });
+
+  return response.data;
+};
+
+export const getProjects = async (): Promise<Project[]> => {
+  const response = await apiClient.get("/projects");
 
   return response.data;
 };

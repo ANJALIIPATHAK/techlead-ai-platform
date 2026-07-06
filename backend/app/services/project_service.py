@@ -44,6 +44,18 @@ class ProjectService:
         return project
 
     @staticmethod
+    def list_projects(db: Session):
+        """
+        Returns all projects ordered by most recently created first.
+        """
+
+        return (
+            db.query(Project)
+            .order_by(Project.created_at.desc())
+            .all()
+        )
+
+    @staticmethod
     def get_project(
         db: Session,
         project_id: UUID,

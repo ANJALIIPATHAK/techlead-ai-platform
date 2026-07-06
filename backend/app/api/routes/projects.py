@@ -63,12 +63,27 @@ def create_project(
 
 @router.get(
 
+    "/projects",
+
+    response_model=list[ProjectResponse],
+
+)
+def list_projects(
+
+    db: Session = Depends(get_db),
+
+):
+
+    return ProjectService.list_projects(db)
+
+
+@router.get(
+
     "/projects/{project_id}",
 
     response_model=ProjectDetailResponse,
 
 )
-
 def get_project(
 
     project_id: UUID,
