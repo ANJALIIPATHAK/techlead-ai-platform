@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 
 import AgentTimeline from "../components/AgentTimeline";
 import DocumentStatusBoard from "../components/DocumentStatusBoard";
@@ -40,6 +41,7 @@ function WorkflowPage() {
 
   const [projectHistory, setProjectHistory] = useState<Project[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const loadProjectHistory = async () => {
     try {
@@ -101,151 +103,164 @@ function WorkflowPage() {
 
         <div className="relative mx-auto flex w-full justify-center">
 
-          <div className="w-full max-w-[1400px] px-6 py-14 md:px-10 xl:px-14">
+          <div className="flex w-full max-w-[1600px] flex-col gap-6 px-6 py-14 md:px-10 xl:px-14 lg:flex-row lg:items-start">
 
-            {/* Hero */}
-
-            <HeroSection />
-
-            {/* Main Dashboard */}
-
-            <section className="mt-16 space-y-14">
-
-              <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/10 bg-[#0f1319]/80 p-6">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
-                    Workflow
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold text-white">
-                    Create a new planning package or revisit an older project
-                  </h2>
-                </div>
-
-                <button
-                  onClick={handleCreateNewProject}
-                  className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-5 py-3 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/20"
-                >
-                  Create New Project
-                </button>
-              </div>
-
-              <ProjectInput
-                description={description}
-                loading={loading}
-                onChange={setDescription}
-                onGenerate={handleGenerateProject}
-              />
-
-              <section className="rounded-3xl border border-white/10 bg-[#0f1319]/80 p-8 shadow-2xl shadow-black/30">
-                <div className="flex flex-wrap items-center justify-between gap-4">
+            <aside
+              className={`w-full overflow-hidden rounded-3xl border border-white/10 bg-[#0f1319]/80 shadow-2xl shadow-black/30 backdrop-blur transition-all duration-300 lg:sticky lg:top-6 ${isSidebarOpen ? "p-4 lg:w-80" : "p-2 lg:w-14"}`}
+            >
+              <div className={`flex items-center ${isSidebarOpen ? "justify-between" : "justify-center"} gap-3`}>
+                {isSidebarOpen ? (
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.3em] text-cyan-300">
                       Project History
                     </p>
-                    <h3 className="mt-2 text-2xl font-semibold text-white">
+                    <h3 className="mt-1 text-lg font-semibold text-white">
                       Previous projects
                     </h3>
                   </div>
+                ) : null}
 
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarOpen((value) => !value)}
+                  aria-label={isSidebarOpen ? "Collapse project history" : "Expand project history"}
+                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10"
+                >
+                  {isSidebarOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
+                </button>
+              </div>
+
+              {isSidebarOpen ? (
+                <div className="mt-6 space-y-3">
                   <button
+                    type="button"
                     onClick={() => void loadProjectHistory()}
-                    className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-200 transition hover:bg-white/10"
+                    className="w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-left text-sm font-medium text-slate-200 transition hover:bg-white/10"
                   >
-                    Refresh
+                    Refresh history
                   </button>
-                </div>
 
-                {historyLoading ? (
-                  <p className="mt-6 text-sm text-slate-400">
-                    Loading project history...
-                  </p>
-                ) : projectHistory.length === 0 ? (
-                  <p className="mt-6 text-sm text-slate-400">
-                    No projects have been created yet.
-                  </p>
-                ) : (
-                  <div className="mt-8 grid gap-4 lg:grid-cols-2">
-                    {projectHistory.map((item) => (
+                  {historyLoading ? (
+                    <p className="text-sm text-slate-400">Loading project history...</p>
+                  ) : projectHistory.length === 0 ? (
+                    <p className="text-sm text-slate-400">No projects have been created yet.</p>
+                  ) : (
+                    projectHistory.map((item) => (
                       <div
                         key={item.id}
-                        className="rounded-2xl border border-white/10 bg-[#0b0f14] p-5"
+                        className="rounded-2xl border border-white/10 bg-[#0b0f14] p-4"
                       >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <h4 className="text-lg font-semibold text-white">
-                              {item.title}
-                            </h4>
-                            <p className="mt-2 text-sm leading-7 text-slate-400">
-                              {item.description}
-                            </p>
-                          </div>
-                        </div>
+                        <h4 className="text-sm font-semibold text-white">
+                          {item.title}
+                        </h4>
+                        <p className="mt-2 text-sm leading-6 text-slate-400 line-clamp-3">
+                          {item.description}
+                        </p>
 
                         <button
+                          type="button"
                           onClick={() => handleOpenProject(item.id)}
-                          className="mt-5 rounded-xl bg-cyan-400/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/20"
+                          className="mt-4 rounded-xl bg-cyan-400/10 px-3 py-2 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/20"
                         >
                           Open Project
                         </button>
                       </div>
-                    ))}
+                    ))
+                  )}
+                </div>
+              ) : null}
+            </aside>
+
+            <div className="min-w-0 flex-1">
+
+              {/* Hero */}
+
+              <HeroSection />
+
+              {/* Main Dashboard */}
+
+              <section className="mt-16 space-y-14">
+
+                <div className="flex flex-wrap items-center justify-between gap-4 rounded-3xl border border-white/10 bg-[#0f1319]/80 p-6">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.28em] text-cyan-300">
+                      Workflow
+                    </p>
+                    <h2 className="mt-2 text-2xl font-semibold text-white">
+                      Create a new planning package or revisit an older project
+                    </h2>
                   </div>
-                )}
-              </section>
 
-              <DocumentStatusBoard
-                stage={stage}
-                documents={
-                  project?.documents ?? []
-                }
-              />
+                  <button
+                    onClick={handleCreateNewProject}
+                    className="rounded-2xl border border-cyan-400/20 bg-cyan-400/10 px-5 py-3 text-sm font-semibold text-cyan-200 transition hover:bg-cyan-400/20"
+                  >
+                    Create New Project
+                  </button>
+                </div>
 
-              <div className="grid gap-10 xl:grid-cols-2">
-
-                <WorkflowTimeline
-                  stage={stage}
-                  documents={
-                    project?.documents ?? []
-                  }
-                />
-
-                <AgentTimeline
-                  stage={stage}
-                  documents={
-                    project?.documents ?? []
-                  }
-                />
-
-              </div>
-
-            </section>
-
-            {/* Generated Project */}
-
-            {project && (
-
-              <section className="mt-20">
-
-                <ProjectOverview
-                  project={project}
-                  stage={stage}
+                <ProjectInput
+                  description={description}
                   loading={loading}
-                  agent={agent}
-                  agentMessage={agentMessage}
-                  feedback={feedback}
-                  onFeedbackChange={setFeedback}
-                  onRegenerate={
-                    regenerateCurrentDocument
-                  }
-                  onApprove={
-                    approveCurrentDocument
-                  }
-                  agentPanelRef={agentPanelRef}
+                  onChange={setDescription}
+                  onGenerate={handleGenerateProject}
                 />
+
+                <DocumentStatusBoard
+                  stage={stage}
+                  documents={
+                    project?.documents ?? []
+                  }
+                />
+
+                <div className="grid gap-10 xl:grid-cols-2">
+
+                  <WorkflowTimeline
+                    stage={stage}
+                    documents={
+                      project?.documents ?? []
+                    }
+                  />
+
+                  <AgentTimeline
+                    stage={stage}
+                    documents={
+                      project?.documents ?? []
+                    }
+                  />
+
+                </div>
 
               </section>
 
-            )}
+              {/* Generated Project */}
+
+              {project && (
+
+                <section className="mt-20">
+
+                  <ProjectOverview
+                    project={project}
+                    stage={stage}
+                    loading={loading}
+                    agent={agent}
+                    agentMessage={agentMessage}
+                    feedback={feedback}
+                    onFeedbackChange={setFeedback}
+                    onRegenerate={
+                      regenerateCurrentDocument
+                    }
+                    onApprove={
+                      approveCurrentDocument
+                    }
+                    agentPanelRef={agentPanelRef}
+                  />
+
+                </section>
+
+              )}
+
+            </div>
 
           </div>
 
