@@ -245,15 +245,15 @@ function AgentPanel({
       }}
       className="overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-[#111317] via-[#101319] to-[#0b0d11] shadow-2xl shadow-black/30"
     >
-      <div className="relative overflow-hidden p-8">
+      <div className="relative overflow-hidden p-6">
 
         <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-cyan-500/5 blur-3xl" />
 
-        <div className="flex flex-col gap-8 lg:flex-row">
+        <div className="flex flex-col gap-6 lg:flex-row">
 
           {/* Left Side */}
 
-          <div className="flex flex-col items-center lg:w-64">
+          <div className="flex flex-col items-center lg:w-56">
 
             <motion.div
               animate={
@@ -268,12 +268,12 @@ function AgentPanel({
                   : 0,
                 ease: "easeInOut",
               }}
-              className={`relative flex h-28 w-28 items-center justify-center rounded-3xl bg-gradient-to-br ${tone.avatar} shadow-2xl ${tone.glow}`}
+              className={`relative flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br ${tone.avatar} shadow-2xl ${tone.glow}`}
             >
-              <span className="absolute inset-0 rounded-3xl border border-white/20" />
+              <span className="absolute inset-0 rounded-2xl border border-white/20" />
 
               <Bot
-                size={52}
+                size={38}
                 className="relative text-slate-950"
               />
             </motion.div>
@@ -288,7 +288,7 @@ function AgentPanel({
 
               </div>
 
-              <h2 className="mt-4 text-2xl font-bold text-white">
+              <h2 className="mt-3 text-xl font-bold text-white">
                 {agent}
               </h2>
 
@@ -306,7 +306,7 @@ function AgentPanel({
 
           <div className="flex-1">
 
-            <div className="rounded-2xl border border-white/10 bg-[#0b0d10]/80 p-6">
+            <div className="rounded-2xl border border-white/10 bg-[#0b0d10]/80 p-5">
 
               <div className="flex items-center gap-2">
 
@@ -357,7 +357,7 @@ function AgentPanel({
 
                 </div>
 
-                <div className="space-y-4"></div>
+                <div className="space-y-4">
 
                   {tasks.map(
                     (
@@ -428,6 +428,8 @@ function AgentPanel({
 
                     },
                   )}
+
+                </div>
 
               </div>
 
