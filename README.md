@@ -59,7 +59,7 @@ docker compose up -d
 
 ### 3. Configure PostgreSQL & backend environment
 
-Before creating the `.env` file, create a PostgreSQL database with named exactly:
+Before creating the `.env` file, create a PostgreSQL database named exactly:
 
 ```text
 techlead_ai
