@@ -87,7 +87,7 @@ Update the following values:
 
 >**Note:** If you prefer Gemini instead of Groq, set `LLM_PROVIDER=gemini` and provide `GEMINI_API_KEY` / `GEMINI_MODEL` in place of the Groq variables.
 
->**Note:** Please keep your Docker Desktop running and make sure the status is `Enginer running`
+>**Note:** Please keep your Docker Desktop running and make sure the status is `Engine running`
 
 ### 4. Install backend dependencies
 
