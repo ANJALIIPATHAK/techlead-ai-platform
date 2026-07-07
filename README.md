@@ -57,18 +57,35 @@ cd infrastructure
 docker compose up -d
 ```
 
-### 3. Configure backend environment
+### 3. Configure PostgreSQL & backend environment
 
-Create a file at `backend/.env` with at least the following:
+Before creating the `.env` file, create a PostgreSQL database with named exactly:
+
+```text
+techlead_ai
+```
+
+After creating the database, create a .env file inside the `backend` directory with at least the following configuration:
 
 ```env
-DATABASE_URL=your_database_url
+DATABASE_URL=postgresql://username:password@localhost:5432/techlead_ai
+
 LLM_PROVIDER=groq
+
 GROQ_API_KEY=your_groq_api_key
+
 GROQ_MODEL=llama-3.1-8b-instant
 ```
 
-If you prefer Gemini instead of Groq, set `LLM_PROVIDER=gemini` and provide `GEMINI_API_KEY` / `GEMINI_MODEL` in place of the Groq variables.
+Update the following values:
+
+- Replace `username` with your PostgreSQL username.
+- Replace `password` with your PostgreSQL password.
+- Replace `your_groq_api_key` with your own Groq API key.
+
+> **Note:** The database name **must** be `techlead_ai`.
+
+>**Note:** If you prefer Gemini instead of Groq, set `LLM_PROVIDER=gemini` and provide `GEMINI_API_KEY` / `GEMINI_MODEL` in place of the Groq variables.
 
 ### 4. Install backend dependencies
 
@@ -139,7 +156,7 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```bash
 cd backend
 source .venv/bin/activate
-python -m app.worker.
+python -m app.worker
 ```
 
 **Windows (PowerShell):**
@@ -147,7 +164,7 @@ python -m app.worker.
 ```powershell
 cd backend
 .venv\Scripts\Activate.ps1
-python - m app.worker.
+python -m app.worker
 ```
 
 ### Terminal 3 — Frontend
