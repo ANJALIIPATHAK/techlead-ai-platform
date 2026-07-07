@@ -1,194 +1,185 @@
 # TechLead AI Platform
 
+TechLead AI Platform is a full-stack prototype that converts a product idea into a review-gated planning workflow. Three specialized AI agents — **Product Manager**, **System Architect**, and **Program Manager** — collaborate through a staged generation-and-approval cycle to turn a single project description into an approved Product Requirements Document, System Design, and Sprint Plan.
 
-TechLead AI Platform is a full-stack prototype that converts a product idea into a review-gated planning workflow. The system orchestrates three AI agents—Product Manager, System Architect, and Program Manager—through a staged generation and approval cycle.
+## Table of Contents
 
+- [Repository Structure](#repository-structure)
+- [How It Works](#how-it-works)
+- [Prerequisites](#prerequisites)
+- [Setup & Installation](#setup--installation)
+- [Running the App](#running-the-app)
+- [API Endpoints](#api-endpoints)
+- [Notes](#notes)
 
-## What this repository contains
+## Repository Structure
 
+| Path | Description |
+| :--- | :--- |
+| `backend/` | FastAPI application, SQLAlchemy models, workflow services, and the background polling worker |
+| `frontend/` | React + Vite application for project creation, review, and approval |
+| `infrastructure/` | `docker-compose.yml` for running PostgreSQL locally |
+| `backend/requirements.txt` | Python dependencies for the API and worker |
 
-- `backend/`: FastAPI backend, SQLAlchemy models, workflow services, and a polling worker.
+## How It Works
 
-- `frontend/`: React + Vite application for project creation, review, and approval.
+1. A user submits a project description, which creates a project and queues the first (PRD) workflow stage.
+2. The background worker picks up one queued workflow at a time and calls the relevant AI agent.
+3. Each stage produces a versioned document and a pending approval record.
+4. The user either **approves** the document, advancing the workflow to the next stage, or **submits feedback**, which rejects the current approval and triggers regeneration of a new document version.
+5. This repeats across PRD → System Design → Sprint Plan until the workflow is complete.
 
-- `infrastructure/`: `docker-compose.yml` for running PostgreSQL locally.
+## Prerequisites
 
-- `backend/requirements.txt`: Python dependencies for the API and worker.
+Install these before you begin:
 
+| Tool | Notes |
+| :--- | :--- |
+| **Git** | For cloning the repository |
+| **Python 3.12+** | Runs the FastAPI backend and worker |
+| **Node.js 18+ and npm** | Runs the React/Vite frontend |
+| **Docker Desktop** | Runs PostgreSQL locally via `docker compose` |
+| **An LLM provider API key** | Groq or Gemini (or a local Ollama installation) |
 
-## Local setup
-
+## Setup & Installation
 
 ### 1. Clone the repository
 
-
 ```bash
-
 git clone <repo-url>
-
 cd techlead-ai-platform
-
 ```
-
 
 ### 2. Start PostgreSQL
 
-
 ```bash
-
 cd infrastructure
-
 docker compose up -d
-
 ```
-
 
 ### 3. Configure backend environment
 
-
-Create `backend/.env` with at least:
-
+Create a file at `backend/.env` with at least the following:
 
 ```env
-
-DATABASE_URL=your_databse_url
-
+DATABASE_URL=your_database_url
 LLM_PROVIDER=groq
-
 GROQ_API_KEY=your_groq_api_key
-
 GROQ_MODEL=llama-3.1-8b-instant
-
 ```
 
-
-If you prefer Gemini, set `LLM_PROVIDER=gemini` and provide `GEMINI_API_KEY`/`GEMINI_MODEL` instead.
-
+If you prefer Gemini instead of Groq, set `LLM_PROVIDER=gemini` and provide `GEMINI_API_KEY` / `GEMINI_MODEL` in place of the Groq variables.
 
 ### 4. Install backend dependencies
 
+**macOS / Linux:**
 
 ```bash
-
 cd backend
-
 python3 -m venv .venv
-
 source .venv/bin/activate
-
 python -m pip install --upgrade pip
-
 python -m pip install -r requirements.txt
-
 ```
 
+**Windows (PowerShell):**
+
+```powershell
+cd backend
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+> If PowerShell blocks the activation script, run PowerShell as Administrator once and execute `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`, then retry.
 
 ### 5. Run database migrations
 
+With the virtual environment still active:
 
 ```bash
-
 cd backend
-
 alembic upgrade head
-
 ```
 
-
-### 6. Start the backend API
-
+### 6. Install frontend dependencies
 
 ```bash
-
-cd backend
-
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-
-```
-
-
-### 7. Start the background worker
-
-
-In a second terminal:
-
-
-```bash
-
-cd backend
-
-source .venv/bin/activate
-
-python app/worker.py
-
-```
-
-
-### 8. Start the frontend
-
-
-```bash
-
 cd frontend
-
 npm install
-
-npm run dev
-
 ```
 
+## Running the App
 
-### 9. Open the UI
+The API, worker, and frontend run as three separate processes. Open a terminal for each.
 
+### Terminal 1 — Backend API
 
-Visit `http://localhost:5173` and use the app to submit a project description, review generated documents, and approve or request regeneration.
+**macOS / Linux:**
 
+```bash
+cd backend
+source .venv/bin/activate
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-## How the app works
+**Windows (PowerShell):**
 
+```powershell
+cd backend
+.venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
 
-- Create a project and queue the first PRD workflow.
+### Terminal 2 — Background Worker
 
-- A worker processes one queued workflow at a time.
+**macOS / Linux:**
 
-- Each stage produces a document and creates a pending approval record.
+```bash
+cd backend
+source .venv/bin/activate
+python -m app.worker.
+```
 
-- User approval triggers the next workflow stage.
+**Windows (PowerShell):**
 
-- Feedback-based regeneration rejects the prior approval and creates a new document version.
+```powershell
+cd backend
+.venv\Scripts\Activate.ps1
+python - m app.worker.
+```
 
+### Terminal 3 — Frontend
 
-## API endpoints
+Same command on every OS:
 
+```bash
+cd frontend
+npm run dev
+```
 
-- `POST /projects` — create a project
+### Open the app
 
-- `GET /projects` — list projects
+Visit **http://localhost:5173**, submit a project description, and step through reviewing, approving, or regenerating each document.
 
-- `GET /projects/{project_id}` — fetch project details
+## API Endpoints
 
-- `POST /projects/{project_id}/approve-prd` — approve PRD
-
-- `POST /projects/{project_id}/approve-system-design` — approve System Design
-
-- `POST /projects/{project_id}/approve-sprint-plan` — approve Sprint Plan
-
-- `POST /projects/{project_id}/regenerate-prd` — regenerate PRD with feedback
-
-- `POST /projects/{project_id}/regenerate-system-design` — regenerate System Design with feedback
-
-- `POST /projects/{project_id}/regenerate-sprint-plan` — regenerate Sprint Plan with feedback
-
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/projects` | Create a project |
+| `GET` | `/projects` | List all projects |
+| `GET` | `/projects/{project_id}` | Fetch project details |
+| `POST` | `/projects/{project_id}/approve-prd` | Approve the PRD |
+| `POST` | `/projects/{project_id}/approve-system-design` | Approve the System Design |
+| `POST` | `/projects/{project_id}/approve-sprint-plan` | Approve the Sprint Plan |
+| `POST` | `/projects/{project_id}/regenerate-prd` | Regenerate the PRD with feedback |
+| `POST` | `/projects/{project_id}/regenerate-system-design` | Regenerate the System Design with feedback |
+| `POST` | `/projects/{project_id}/regenerate-sprint-plan` | Regenerate the Sprint Plan with feedback |
 
 ## Notes
 
-
-- Frontend is configured to call `http://127.0.0.1:8000`.
-
-- The worker uses a simple polling loop and must run alongside the API.
-
-- Live workflow state is refreshed from the backend while generation is in progress.
-
-
-
-
+- The frontend is configured to call the API at `http://127.0.0.1:8000`.
+- The background worker uses a simple polling loop and must be running alongside the API for workflows to progress.
+- The frontend polls the backend while a stage is generating, so live status updates without needing to refresh the page.
+- Both the API server and the worker must be running for the app to function — the API alone will accept requests but won't advance any workflow stages.
